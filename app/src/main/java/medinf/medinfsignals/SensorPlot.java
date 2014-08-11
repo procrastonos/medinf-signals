@@ -40,14 +40,14 @@ public class SensorPlot extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.historylight); // TODO: create View
 
-        lightLevelsPlot = (XYPlot) findViewByID(R.id.lightLevelsPlot);
-        lightLevelsPlot.setBoundaries(-1, 1, BoundaryMode.FIXED);
-        lightLevelsPlot.getGraphWidget().getDomainLabelPaint().setColor(Color.TANSPARENT);
+        lightLevelsPlot = (XYPlot) findViewById(R.id.lightLevelsPlot);
+        lightLevelsPlot.setDomainBoundaries(-1, 1, BoundaryMode.FIXED);
+        lightLevelsPlot.getGraphWidget().getDomainLabelPaint().setColor(Color.TRANSPARENT);
 
         // setup a´light Levels Plot
         lightSeries = new SimpleXYSeries("light");
 
-        lightLevelsPlot.addSeries(lightSeries, new BarFormatter(Color.rgb(0, 200, 0), Color.rgb(0, 80, 0);
+        lightLevelsPlot.addSeries(lightSeries, new BarFormatter(Color.rgb(0, 200, 0), Color.rgb(0, 80, 0)));
 
         lightLevelsPlot.setDomainStepValue(3);
         lightLevelsPlot.setTicksPerRangeLabel(3);
@@ -66,10 +66,10 @@ public class SensorPlot extends Activity
         lightHistoryPlot = (XYPlot) findViewById(R.id.lightHistoryPlot);
         lightHistorySeries = new SimpleXYSeries("light");
 
-        lightHistoryPlot.setRangeBoundaries(0, 1024, BundaryMode.FIXED);
-        lightHistoryPlot.setDomainStepValue(HISTORY_SIZE), BoundaryMode.FIXED);
+        lightHistoryPlot.setRangeBoundaries(0, 1024, BoundaryMode.FIXED);
+        lightHistoryPlot.setDomainStepValue(HISTORY_SIZE/10);
         lightHistoryPlot.addSeries(lightHistorySeries, new LineAndPointFormatter(Color.rgb(200, 100, 100), null, null, null));
-        lightHistoryPLot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
+        lightHistoryPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
         lightHistoryPlot.setDomainStepValue(HISTORY_SIZE/10);
         lightHistoryPlot.setDomainLabel("Sample Index");
         lightHistoryPlot.getDomainLabelWidget().pack();
@@ -77,18 +77,18 @@ public class SensorPlot extends Activity
         lightHistoryPlot.getRangeLabelWidget().pack();
 
         lightHistoryPlot.setRangeValueFormat(new DecimalFormat("#"));
-        lightHistoryPLot.setDomainValueFormat("new DecimalFormat"#"));
+        lightHistoryPlot.setDomainValueFormat(new DecimalFormat("#"));
 
                 // setup check boxes
-                hwAcceleratedCb = (CheckBox findViewById(R.id.hwAccelerationCb);
+                hwAcceleratedCb = (CheckBox) findViewById(R.id.hwAccelerationCb);
         final PlotStatistics levelStats = new PlotStatistics(1000, false);
         final PlotStatistics histStats = new PlotStatistics(1000, false);
 
         lightLevelsPlot.addListener(levelStats);
-        lightHistoryPLot.addListener(histStats);
-        hwAccelerated.Cb.setOnCheckedChangedListener(new CompoundButton.OnCHeckedChangeListener() {
+        lightHistoryPlot.addListener(histStats);
+        hwAcceleratedCb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onCheckedChanged(CompoundButton compoundButton boolean b) {
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 if(b) {
                     lightLevelsPlot.setLayerType(View.LAYER_TYPE_NONE, null);
                     lightHistoryPlot.setLayerType(View.LAYER_TYPE_NONE, null);
@@ -96,25 +96,30 @@ public class SensorPlot extends Activity
                 else
                 {
                     lightLevelsPlot.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-                    lightHistoryPLot.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+                    lightHistoryPlot.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
                 }
             }
         });
 
         showFpsCb = (CheckBox) findViewById(R.id.showFpsCb);
-        showFpsCb.setOnChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        showFpsCb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onCHeckedChanged(CompondButton compoundButton, boolean b) {
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 levelStats.setAnnotatePlotEnabled(b);
-                histStats.setAnnotetePlotEnabled(b);
+                histStats.setAnnotatePlotEnabled(b);
             }
         });
+        BarRenderer barRenderer = (BarRenderer) lightLevelsPlot.getRenderer(BarRenderer.class);
+        if(barRenderer != null) {
+            // make our bars a little thicker than the default so they can be seen better:
+            barRenderer.setBarWidth(25);
+        }
 
         redrawer = new Redrawer(Arrays.asList(new Plot[]{lightHistoryPlot, lightLevelsPlot}), 100, false);
     }
 
     @Override
-    public void on Resume() {
+    public void onResume() {
     super.onResume();
     redrawer.start();
 }
@@ -125,7 +130,7 @@ public class SensorPlot extends Activity
     }
 
     @Override
-    public onDestroy() {
+    public void onDestroy() {
         redrawer.finish();
         super.onDestroy();
     }
@@ -133,12 +138,12 @@ public class SensorPlot extends Activity
     // new sensor data
     public synchronized void onSensorChanged(Event event) {
         lightSeries.setModel(Arrays.asList(
-                newNumber[]{event.values[0]}),
+                new Number[]{event.values[0]}),
         SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
 
         // remove oldest sample on history
         if (lightHistorySeries.size() > HISTORY_SIZE) {
-            lightHistory.removeFirst();
+            lightHistorySeries.removeFirst();
         }
 
         // add latest sample to history
@@ -146,21 +151,3 @@ public class SensorPlot extends Activity
     }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}
-        }
