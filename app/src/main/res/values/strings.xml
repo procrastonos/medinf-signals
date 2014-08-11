@@ -1,0 +1,15 @@
+<resources>
+    <string name="logo">Logo of MedInf-Seminar</string>
+    <string name="listheader">listheader</string>
+    <string name="app_name">MedInf-Seminar</string>
+    <string name="refreshButton">Aktualisieren</string>
+    <string name="discovered_devices">Gefundene Geräte</string>
+    <string name="search_started">Suche nach Geräten gestartet !</string>
+    <string name="search_ended">Suche nach Geräten beendet !</string>
+    <string name="find_new_device">Neues Gerät gefunden. Name:</string>
+    <string name="startstop">Start/Stop</string>
+    <string name="exitConfirmText">Möchten Sie die Anwendung wirklich beenden?</string>
+    <string name="exitConfirmTitle">Anwendung schließen</string>
+    <string name="exitItem">Schließen</string>
+    <string name="action_settings">Settings</string>
+</resources>
