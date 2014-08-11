@@ -33,7 +33,7 @@ public class SensorPlot extends Activity
     private SimpleXYSeries lightHistorySeries;
 
     private Redrawer redrawer;
-
+//remove
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
