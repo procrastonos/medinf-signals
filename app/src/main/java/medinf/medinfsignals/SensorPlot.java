@@ -57,7 +57,7 @@ public class SensorPlot extends Activity
         // update domain and range axis labels
         lightLevelsPlot.setDomainLabel("");
         lightLevelsPlot.getDomainLabelWidget().pack();
-        lightLevelsPlot.setRangeLabel("Angle (Degs)");
+        lightLevelsPlot.setRangeLabel("Unit");
         lightLevelsPlot.getRangeLabelWidget().pack();
         lightLevelsPlot.setGridPadding(15, 0, 15, 0);
         lightLevelsPlot.setRangeValueFormat(new DecimalFormat("#"));
