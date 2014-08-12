@@ -10,29 +10,19 @@
         android:orientation="horizontal"
         android:layout_weight="10">
         <com.androidplot.xy.XYPlot
-            android:id="@+id/lightLevelsPlot"
-            android:layout_width="40pt"
-            android:layout_height="fill_parent"
-            android:layout_gravity="right"/>
-        <com.androidplot.xy.XYPlot
             android:id="@+id/lightHistoryPlot"
             android:layout_height="fill_parent"
-            android:layout_width="553dp"/>
+            android:layout_width="fill_parent"/>
     </LinearLayout>
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_weight="90">
-        <CheckBox
-            android:id="@+id/showFpsCb"
+
+        <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/showFpsCb"/>
-        <CheckBox
-            android:id="@+id/hwAccelerationCb"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/hwAccCb"
-            android:checked="false"/>
+            android:text="New Button"
+            android:id="@+id/button" />
     </LinearLayout>
 </LinearLayout>
