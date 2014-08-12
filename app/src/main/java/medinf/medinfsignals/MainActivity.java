@@ -9,7 +9,6 @@ package medinf.medinfsignals;
         import java.util.Set;
 
         import medinf.medinfsignals.Bluetooth;
-        import medinf.medinfsignals.OrientedSensor;
 
         import android.app.Activity;
         import android.app.AlertDialog;
@@ -119,8 +118,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         // Testing
-        Intent intent = new Intent(MainActivity.this, SensorPlot.class);
-        startActivity(intent);
+
 
         //Display aktiv lassen
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -176,11 +174,8 @@ public class MainActivity extends Activity {
                         // Verbindung fehlgeschlagen
                     }
 
-                    // Neue Activity starten
-                    Intent intent = new Intent(MainActivity.this, OrientedSensor.class);
-
+                    Intent intent = new Intent(MainActivity.this, SensorPlot.class);
                     startActivity(intent);
-
                 }
             }
         });
