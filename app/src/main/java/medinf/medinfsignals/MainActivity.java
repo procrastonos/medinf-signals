@@ -163,7 +163,7 @@ public class MainActivity extends Activity {
 
                     }
 
-                    Intent intent = new Intent(this, DisplayMessageActivity.class);
+                    //Intent intent = new Intent(this, DisplayMessageActivity.class);
 
                 }
             }
