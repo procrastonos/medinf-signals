@@ -38,7 +38,7 @@ public class SensorPlot extends Activity
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.historylight); // TODO: create View
+        setContentView(R.layout.sensor_plot_layout); // TODO: create View
 
         lightLevelsPlot = (XYPlot) findViewById(R.id.lightLevelsPlot);
         lightLevelsPlot.setDomainBoundaries(-1, 1, BoundaryMode.FIXED);

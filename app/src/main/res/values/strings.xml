@@ -12,4 +12,6 @@
     <string name="exitConfirmTitle">Anwendung schließen</string>
     <string name="exitItem">Schließen</string>
     <string name="action_settings">Settings</string>
+    <string name="showFpsCb">showFPS</string>
+    <string name="hwAccCb">hwAcc</string>
 </resources>
