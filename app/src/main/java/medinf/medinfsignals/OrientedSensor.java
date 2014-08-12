@@ -24,12 +24,15 @@ public class OrientedSensor extends Activity
     	volatile boolean fPause = false;
     	 
     	   public void run() {
+		   short value = new short();
     		   while (true) {
  	    		  		//Werte von Bluetooth.read() auslesen und dem Handler übergeben
     	    		  	//TODO:
-				}
-    		   
-   	       }
+				value = Bluetooth.read();
+	  	  		// ValueRecievedEvent auslösen 		   
+		  		listener.onValueRecievedEvent(value);
+	   			}
+	   }
     	   
     	    /**
     		* Stoppt den ausgefuehrten Thread
