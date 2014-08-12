@@ -37,6 +37,7 @@ public class SensorPlot extends Activity
 
         // setup history plot
         lightHistoryPlot = (XYPlot) findViewById(R.id.lightHistoryPlot);
+        lightHistoryPlot.setDomainBoundaries(0, 1024, BoundaryMode.FIXED);
         lightHistorySeries = new SimpleXYSeries("light");
 
         lightHistoryPlot.setRangeBoundaries(0, 1024, BoundaryMode.FIXED);
