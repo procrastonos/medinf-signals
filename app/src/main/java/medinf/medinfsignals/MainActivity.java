@@ -118,6 +118,10 @@ public class MainActivity extends Activity {
         // Layout setzen
         setContentView(R.layout.activity_main);
 
+        // Testing
+        Intent intent = new Intent(MainActivity.this, SensorPlot.class);
+        startActivity(intent);
+
         //Display aktiv lassen
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 

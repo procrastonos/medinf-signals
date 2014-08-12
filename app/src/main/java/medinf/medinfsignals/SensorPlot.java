@@ -66,8 +66,10 @@ public class SensorPlot extends Activity
 }
 
     @Override
-    public void onPause() {
+    public void onPause()
+    {
         redrawer.pause();
+        super.onPause();
     }
 
     @Override
@@ -77,6 +79,7 @@ public class SensorPlot extends Activity
     }
 
     // new sensor data
+    /*
     public synchronized void newDataReceived(Event event) {
         lightSeries.setModel(Arrays.asList(
                 new Number[]{event.values[0]}),
@@ -90,5 +93,5 @@ public class SensorPlot extends Activity
         // add latest sample to history
         lightHistorySeries.addLast(null, event.values[0]);
     }
-
+*/
 }
