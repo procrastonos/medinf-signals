@@ -18,8 +18,9 @@ public class Bluetooth {
     // Lesebuffer
     static byte[] buff = new byte[2];
 
-    // entfernter BluetoothDevice : Mikrokontroller
+    // Bluetooth device
     public static BluetoothDevice device = null;
+    // Bluetooth socket
     public static BluetoothSocket socket = null;
     public static InputStream input = null;
     public static OutputStream output = null;

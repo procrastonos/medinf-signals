@@ -167,6 +167,8 @@ public class MainActivity extends Activity {
                     // Bluetooth device anhand von id setzen
                     Bluetooth.setBluetoothDevice(devices.get((int)id));
 
+                    Intent intent = new Intent(MainActivity.this, SensorPlot.class);
+                    startActivity(intent);
                     try {
                         // Zu Bluetooth device verbinden
                         Bluetooth.connect();
@@ -174,8 +176,7 @@ public class MainActivity extends Activity {
                         // Verbindung fehlgeschlagen
                     }
 
-                    Intent intent = new Intent(MainActivity.this, SensorPlot.class);
-                    startActivity(intent);
+
                 }
             }
         });

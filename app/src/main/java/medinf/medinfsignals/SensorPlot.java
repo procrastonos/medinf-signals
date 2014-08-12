@@ -3,6 +3,8 @@ package medinf.medinfsignals;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.WindowManager;
 
 import com.androidplot.Plot;
@@ -18,70 +20,14 @@ import java.util.List;
 
 import medinf.medinfsignals.Bluetooth;
 
-// ???
-interface ValueReceivedListener{
-    public short ValueReceived(short value);
-}
-
-// ???
-class ValueReceivedClass implements ValueReceivedListener {
-    @Override
-    public short ValueReceived(short value) {
-        return value;
-    }
-}
-
-class BluetoothThread extends Thread {
-    List<ValueReceivedListener> listeners = new ArrayList<ValueReceivedListener>();
-
-    volatile boolean fPause = false;
-    public void addListener(ValueReceivedListener toAdd){
-        listeners.add(toAdd);
-    }
-
-    public void run() {
-        short value = 0;
-        while (true) {
-            //Werte von Bluetooth.read() auslesen und dem Handler übergeben
-            //TODO:
-            // Bluetooth.read() auslesen
-
-            try {
-                value = Bluetooth.read();
-            } catch (IOException e) {
-                // panic!
-            }
-
-            // Listener auslösen und value übergeben
-            if (value > 0) {
-                for (ValueReceivedListener vrl : listeners)
-                    vrl.ValueReceived(value);
-            }
-        }
-    }
-
-    /**
-     * Stoppt den ausgefuehrten Thread
-     */
-    public void stopT() {
-        fPause = true;
-    }
-
-
-    /**
-     * Startet den gestoppten Thread
-     */
-    public void startT() {
-        fPause = false;
-    }
-}
-
 public class SensorPlot extends Activity
 {
     // bluetooth thread
     private BluetoothThread readBThread;
 
     private static final int HISTORY_SIZE = 300;
+
+    private int BT_MSG = 2342;
     private XYPlot lightHistoryPlot = null;
     private SimpleXYSeries lightHistorySeries;
     private Redrawer redrawer;
@@ -106,28 +52,67 @@ public class SensorPlot extends Activity
 
         // setup history plot
         lightHistoryPlot = (XYPlot) findViewById(R.id.lightHistoryPlot);
-        lightHistoryPlot.setDomainBoundaries(0, 300, BoundaryMode.FIXED);
-        lightHistorySeries = new SimpleXYSeries("light");
+        lightHistoryPlot.setDomainBoundaries(0, HISTORY_SIZE, BoundaryMode.FIXED);
+        lightHistorySeries = new SimpleXYSeries("Brightness");
 
         lightHistoryPlot.setRangeBoundaries(0, 1024, BoundaryMode.FIXED);
         lightHistoryPlot.setDomainStepValue(HISTORY_SIZE/10);
         lightHistoryPlot.addSeries(lightHistorySeries, new LineAndPointFormatter(Color.rgb(200, 100, 100), null, null, null));
         lightHistoryPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
-        lightHistoryPlot.setDomainStepValue(HISTORY_SIZE/10);
-        lightHistoryPlot.setDomainLabel("Sample Index");
+        lightHistoryPlot.setDomainLabel("Time");
         lightHistoryPlot.getDomainLabelWidget().pack();
-        lightHistoryPlot.setRangeLabel("Unit");
+        lightHistoryPlot.setRangeLabel("Brightness");
         lightHistoryPlot.getRangeLabelWidget().pack();
 
         lightHistoryPlot.setRangeValueFormat(new DecimalFormat("#"));
         lightHistoryPlot.setDomainValueFormat(new DecimalFormat("#"));
 
-        final PlotStatistics histStats = new PlotStatistics(1000, false);
-
-        lightHistoryPlot.addListener(histStats);
-
         redrawer = new Redrawer(Arrays.asList(new Plot[]{lightHistoryPlot}), 100, false);
     }
+
+    class BluetoothThread extends Thread {
+        volatile boolean fPause = false;
+
+        public void run() {
+            short value = 0;
+            while (true) {
+                //Werte von Bluetooth.read() auslesen und dem Handler übergeben
+                //TODO:
+
+                //try {
+                    //value = Bluetooth.read();
+                    value = 512;
+                //} catch (IOException e) {
+                    // panic!
+                //}
+
+                Message msg = Message.obtain(messageHandler, BT_MSG, value, 0);
+                messageHandler.sendMessage(msg);
+            }
+        }
+
+
+        /**
+         * Stoppt den ausgefuehrten Thread
+         */
+        public void stopT() {
+            fPause = true;
+        }
+
+
+        /**
+         * Startet den gestoppten Thread
+         */
+        public void startT() {
+            fPause = false;
+        }
+    }
+
+    private Handler messageHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            drawData(msg.arg1);
+        }
+    };
 
     @Override
     public void onResume() {
@@ -181,21 +166,14 @@ public class SensorPlot extends Activity
         super.onBackPressed();
     }
 
-
     // new sensor data
-    /*
-    public synchronized void newDataReceived(Event event) {
-        lightSeries.setModel(Arrays.asList(
-                new Number[]{event.values[0]}),
-        SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
-
+    public synchronized void drawData(int value) {
         // remove oldest sample on history
         if (lightHistorySeries.size() > HISTORY_SIZE) {
             lightHistorySeries.removeFirst();
         }
 
         // add latest sample to history
-        lightHistorySeries.addLast(null, event.values[0]);
+        lightHistorySeries.addLast(null, value);
     }
-*/
 }
