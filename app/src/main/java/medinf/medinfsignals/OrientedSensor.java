@@ -1,4 +1,4 @@
-package mst.medinfsignals.activity;
+package medinf.medinfsignals;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -6,7 +6,7 @@ import android.view.WindowManager;
 
 import java.io.IOException;
 
-import mst.medinfsignals.kernel.Bluetooth;
+import medinf.medinfsignals.Bluetooth;
 
 /**
  * Zweitaktivity
@@ -25,12 +25,18 @@ public class OrientedSensor extends Activity
     	volatile boolean fPause = false;
     	 
     	   public void run() {
+		   short value = new short();
     		   while (true) {
  	    		  		//Werte von Bluetooth.read() auslesen und dem Handler übergeben
     	    		  	//TODO:
-				}
-    		   
-   	       }
+				// Bluetooth.read() auslesen
+				value = Bluetooth.read();
+				// Listener auslösen und value übergeben
+				for (ValueRecievedListener VRL : listener)
+					vrl.ValueRecieved(value);
+
+	   	   }
+	   }
     	   
     	    /**
     		* Stoppt den ausgefuehrten Thread

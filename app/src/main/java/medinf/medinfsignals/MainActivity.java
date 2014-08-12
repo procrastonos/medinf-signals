@@ -119,6 +119,7 @@ public class MainActivity extends Activity {
         //Display aktiv lassen
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        // GUI-Element progressSearch holen
         progressSearch = (ProgressBar)findViewById(R.id.progressSearch);
         progressSearch.setVisibility(View.GONE); // zuerst verstecken
 
@@ -127,19 +128,24 @@ public class MainActivity extends Activity {
         registerReceiver(broadcastReceiver,new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED));
         registerReceiver(broadcastReceiver,new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED));
 
-        // Adapter f�r ListVIew initialisieren
+        // Adapter für ListVIew initialisieren
         deviceListAdapter = new SimpleAdapter(this, data, android.R.layout.simple_list_item_2,
                 new String[] {"name", "mac"},
                 new int[] {android.R.id.text1, android.R.id.text2});
 
+        // GUI-Element deviceList holen
         final ListView deviceList =  (ListView)findViewById(R.id.deviceList);
+        // GUI-Element header aufblähen
         TextView header = (TextView)getLayoutInflater().inflate(R.layout.listheader, null);
         header.setText(R.string.discovered_devices);	// Text setzen
 
         // Deaktivierung des Header (verbietet anklicken)
         header.setEnabled(false);
+        // Header für deviceList setzen
         deviceList.addHeaderView(header);
+        // Adapter für deviceList setzen
         deviceList.setAdapter(deviceListAdapter);
+        // Listener für click events definieren
         deviceList.setOnItemClickListener(new OnItemClickListener() {
 
             // ----2----
@@ -147,7 +153,6 @@ public class MainActivity extends Activity {
             //id setzen. Neuen Intent erstellen und neue Activity starten.
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                //BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
                 //nur auf Elemente in der Liste reagieren
                 if (view.isEnabled()){
                     //TODO: Implementierung der Methode mit oben beschriebener Funktionalitaet
@@ -155,22 +160,26 @@ public class MainActivity extends Activity {
                     // suche abbrechen
                     mBluetoothAdapter.cancelDiscovery();
 
+                    // Bluetooth device anhand von id setzen
                     Bluetooth.setBluetoothDevice(devices.get((int)id));
 
                     try {
+                        // Zu Bluetooth device verbinden
                         Bluetooth.connect();
                     } catch (IOException e) {
-
+                        // Verbindung fehlgeschlagen
                     }
 
+                    // Neue Activity starten
                     //Intent intent = new Intent(this, DisplayMessageActivity.class);
 
                 }
             }
         });
 
-        //Button zum Starten der Bluetooth-Geraete Suche
+        //Button zum Starten der Bluetooth-Geraete Suche holen
         searchButton = (Button)findViewById(R.id.searchButton);
+        // Listener für click events definieren;
         searchButton.setOnClickListener(new View.OnClickListener() {
 
             // ----1----
@@ -195,12 +204,11 @@ public class MainActivity extends Activity {
                     Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                     startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
                 } else startBluetooth();
-
-
             }
         });
     }
 
+    // Bluetooth discovery starten
     private void startBluetooth() {
         // Device-Liste zurücksetzen
         devices.clear();
@@ -210,6 +218,7 @@ public class MainActivity extends Activity {
         mBluetoothAdapter.startDiscovery();
     }
 
+    // activity result callback
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_ENABLE_BT)
             if (resultCode == RESULT_OK) // either RESULT_OK or RESULT_CANCELED
