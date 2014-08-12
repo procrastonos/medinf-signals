@@ -1,4 +1,4 @@
-package mst.medinfsignals.activity;
+package medinf.medinfsignals;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -6,7 +6,7 @@ import android.view.WindowManager;
 
 import java.io.IOException;
 
-import mst.medinfsignals.kernel.Bluetooth;
+import medinf.medinfsignals.Bluetooth;
 
 /**
  * Zweitaktivity

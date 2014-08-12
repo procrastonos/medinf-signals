@@ -218,6 +218,7 @@ public class MainActivity extends Activity {
         mBluetoothAdapter.startDiscovery();
     }
 
+    // activity result callback
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_ENABLE_BT)
             if (resultCode == RESULT_OK) // either RESULT_OK or RESULT_CANCELED
