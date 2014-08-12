@@ -12,6 +12,7 @@ import mst.medinfsignals.kernel.Bluetooth;
  * Zweitaktivity
  * Diese Activity dient dazu, die Werte des Bluetooth-Geraetes zu Visualisieren
  */
+
 public class OrientedSensor extends Activity
 {	
 	private BluetoothThread readBThread;
