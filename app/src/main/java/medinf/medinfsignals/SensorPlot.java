@@ -136,7 +136,7 @@ public class SensorPlot extends Activity
     }
 
     // new sensor data
-    public synchronized void onSensorChanged(Event event) {
+    public synchronized void newDataReceived(Event event) {
         lightSeries.setModel(Arrays.asList(
                 new Number[]{event.values[0]}),
         SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
@@ -147,7 +147,7 @@ public class SensorPlot extends Activity
         }
 
         // add latest sample to history
-        lightHistorySeries.addLatest(null, event.values[0]);
+        lightHistorySeries.addLast(null, event.values[0]);
     }
 
 }
