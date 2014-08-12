@@ -72,7 +72,7 @@ public class Bluetooth {
      * @return gelesenen ADC-Wert
      * @throws IOException
      */
-    public synchronized static short read (byte[] packet) throws IOException {
+    public synchronized static short read() throws IOException {
         // ----3----
         //Die Daten sollen von der Bluetooth-Schnittstelle des Mikrocontrollers eingelesen werden
         //und anschließend übergeben werden. Dafür benötigen Sie noch einen Lesebuffer (siehe oben)
