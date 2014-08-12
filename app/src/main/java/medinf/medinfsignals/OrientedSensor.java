@@ -28,10 +28,13 @@ public class OrientedSensor extends Activity
     		   while (true) {
  	    		  		//Werte von Bluetooth.read() auslesen und dem Handler übergeben
     	    		  	//TODO:
+				// Bluetooth.read() auslesen
 				value = Bluetooth.read();
-	  	  		// ValueRecievedEvent auslösen 		   
-		  		listener.onValueRecievedEvent(value);
-	   			}
+				// Listener auslösen und value übergeben
+				for (ValueRecievedListener VRL : listener)
+					vrl.ValueRecieved(value);
+
+	   	   }
 	   }
     	   
     	    /**
