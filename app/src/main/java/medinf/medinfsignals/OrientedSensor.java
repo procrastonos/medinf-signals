@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.WindowManager;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.io.IOException;
 
 import medinf.medinfsignals.Bluetooth;
@@ -12,6 +14,17 @@ import medinf.medinfsignals.Bluetooth;
  * Zweitaktivity
  * Diese Activity dient dazu, die Werte des Bluetooth-Geraetes zu Visualisieren
  */
+interface ValueRecievedListener{
+	public short ValueRecieved(short value);
+}
+
+class ValueRecievedClass implements ValueRecievedListener {
+    @Override
+    public short ValueRecieved(short value) {
+        return value;
+    }
+}
+
 
 public class OrientedSensor extends Activity
 {	
@@ -22,21 +35,27 @@ public class OrientedSensor extends Activity
 	 * weiterzugeben
 	 */
     private class BluetoothThread extends Thread {
-    	volatile boolean fPause = false;
-    	 
+	List<ValueRecievedListener> listeners = new ArrayList<ValueRecievedListener>();
+
+        volatile boolean fPause = false;
+	    public void addListener(ValueRecievedListener toAdd){
+		    listeners.add(toAdd);
+	   }		
     	   public void run() {
 		   short value = 0;
     		   while (true) {
- 	    		  		//Werte von Bluetooth.read() auslesen und dem Handler übergeben
-    	    		  	//TODO:
-				// Bluetooth.read() auslesen
-				//value = Bluetooth.read();
-				// Listener auslösen und value übergeben
-				/*for (ValueRecievedListener VRL : listener)
-					vrl.ValueRecieved(value);
-*/
-	   	        }
-	       }
+                   //Werte von Bluetooth.read() auslesen und dem Handler übergeben
+                   //TODO:
+                   // Bluetooth.read() auslesen
+                   //value = Bluetooth.read();
+                   // Listener auslösen und value übergeben
+
+                   if (value > 0) {
+                       for (ValueRecievedListener vrl : listeners)
+                           vrl.ValueRecieved(value);
+                   }
+               }
+	   	   }
     	   
     	    /**
     		* Stoppt den ausgefuehrten Thread
