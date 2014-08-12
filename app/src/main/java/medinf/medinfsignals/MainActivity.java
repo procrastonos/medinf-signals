@@ -9,6 +9,8 @@ package medinf.medinfsignals;
         import java.util.Set;
 
         import medinf.medinfsignals.Bluetooth;
+        import medinf.medinfsignals.OrientedSensor;
+
         import android.app.Activity;
         import android.app.AlertDialog;
         import android.bluetooth.BluetoothAdapter;
@@ -171,7 +173,9 @@ public class MainActivity extends Activity {
                     }
 
                     // Neue Activity starten
-                    //Intent intent = new Intent(this, DisplayMessageActivity.class);
+                    Intent intent = new Intent(MainActivity.this, OrientedSensor.class);
+
+                    startActivity(intent);
 
                 }
             }
