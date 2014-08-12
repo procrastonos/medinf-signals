@@ -12,6 +12,17 @@ import mst.medinfsignals.kernel.Bluetooth;
  * Zweitaktivity
  * Diese Activity dient dazu, die Werte des Bluetooth-Geraetes zu Visualisieren
  */
+interface ValueRecievedListener{
+	public short ValueRecieved(short value);
+}
+
+class ValueRecievedClass implements ValueRecievedListener{
+	@Override 
+	public short ValueRecieved(short value){
+		return value;
+	}
+
+
 public class OrientedSensor extends Activity
 {	
 	private BluetoothThread readBThread;
@@ -21,18 +32,24 @@ public class OrientedSensor extends Activity
 	 * weiterzugeben
 	 */
     private class BluetoothThread extends Thread {
+	List<ValueRecievedListener> listeners = new ArrayList<ValueRecievedListener>();
+
     	volatile boolean fPause = false;
-    	 
+	   public void addListener(ValueRecievedListener toAdd){
+		listener.add(toAdd);
+	   }		
     	   public void run() {
-		   short value = new short();
+		   short value = 0; 
     		   while (true) {
  	    		  		//Werte von Bluetooth.read() auslesen und dem Handler übergeben
     	    		  	//TODO:
 				// Bluetooth.read() auslesen
 				value = Bluetooth.read();
 				// Listener auslösen und value übergeben
-				for (ValueRecievedListener VRL : listener)
-					vrl.ValueRecieved(value);
+				if (value>0){
+					for (ValueRecievedListener vrl : listener)
+						vrl.ValueRecieved(value);
+				}
 
 	   	   }
 	   }
