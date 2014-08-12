@@ -16,7 +16,7 @@ import android.bluetooth.BluetoothSocket;
  */
 public class Bluetooth {
     // Lesebuffer
-    //TODO:
+    static byte[] buff = new byte[2];
 
     // entfernter BluetoothDevice : Mikrokontroller
     public static BluetoothDevice device = null;
@@ -72,13 +72,17 @@ public class Bluetooth {
      * @return gelesenen ADC-Wert
      * @throws IOException
      */
-    public synchronized static void read (byte[] packet) throws IOException {
+    public synchronized static short read (byte[] packet) throws IOException {
         // ----3----
         //Die Daten sollen von der Bluetooth-Schnittstelle des Mikrocontrollers eingelesen werden
         //und anschließend übergeben werden. Dafür benötigen Sie noch einen Lesebuffer (siehe oben)
         //Alternative: Überlegen Sie sich eine Implementierung für das Empfangen von mehreren Channeln.
 
         //TODO: Implementierung der Methode mit oben beschriebener Funktionalität
+
+        input.read(buff);
+
+        return (short)(buff[0]<<8 + buff[1]);
     }
 
 

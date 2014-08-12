@@ -40,6 +40,7 @@ package medinf.medinfsignals;
  * wird eine neue Activity gestartet.
  */
 public class MainActivity extends Activity {
+
     // Intent Request Code fuer Bluetooth
     private static final int REQUEST_ENABLE_BT = 1337;
     //GUI Elemente
@@ -47,7 +48,6 @@ public class MainActivity extends Activity {
     private Button searchButton = null;
     // Liste mit allen gefundenen Bluetooth-Geraeten
     public static ArrayList<BluetoothDevice> devices = new ArrayList<BluetoothDevice>();
-    public static int saveid;
     // Liste mit Namen und MACs
     private List<Map<String, String>> data = new ArrayList<Map<String, String>>();
     // Adapter fuer die ListView
@@ -55,17 +55,20 @@ public class MainActivity extends Activity {
     public InputStream is;
     // Adapter für bluetooth
     private BluetoothAdapter mBluetoothAdapter;
+
     /**
      * BroadcastReceiver zum Empfang von Broadcast Nachrichten.
      */
-    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-        //
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver()
+    {
         /**
          * Behandlung der Nachrichten ACTION_FOUND, ACTION_DISCOVERY_STARTED,
          * ACTION_DISCOVERY_FINISHED
          */
-        public void onReceive(Context context, Intent intent) {
+        public void onReceive(Context context, Intent intent)
+        {
             String action = intent.getAction();
+
             // neues Geraet wurde gefunden
             if (action.equals(BluetoothDevice.ACTION_FOUND)) {
                 // BluetoothDevice Objekt von Intent holen
@@ -83,7 +86,7 @@ public class MainActivity extends Activity {
                 Toast toast = Toast.makeText(getApplicationContext(), getResources().getString(R.string.find_new_device) + device.getName(), Toast.LENGTH_SHORT);
                 toast.show();
 
-                // Suche wurde gestartet
+            // Suche wurde gestartet
             } else if (action.equals(BluetoothAdapter.ACTION_DISCOVERY_STARTED)) {
                 // ProgressBar anzeigen
                 progressSearch.setVisibility(View.VISIBLE);
@@ -154,7 +157,13 @@ public class MainActivity extends Activity {
 
                     Bluetooth.setBluetoothDevice(devices.get((int)id));
 
-                    
+                    try {
+                        Bluetooth.connect();
+                    } catch (IOException e) {
+
+                    }
+
+                    Intent intent = new Intent(this, DisplayMessageActivity.class);
 
                 }
             }
