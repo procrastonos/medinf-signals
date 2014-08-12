@@ -16,7 +16,7 @@ import android.bluetooth.BluetoothSocket;
  */
 public class Bluetooth {
     // Lesebuffer
-    static byte[] buff = new byte[2];
+    static byte[] buff = new byte[1];
 
     // Bluetooth device
     public static BluetoothDevice device = null;
@@ -83,7 +83,9 @@ public class Bluetooth {
 
         input.read(buff);
 
-        return (short)(buff[0]<<8 + buff[1]);
+        return buff[0];
+
+        //return (short)(buff[0]<<8 + buff[1]);
     }
 
 

@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.WindowManager;
+import android.widget.Button;
 
 import com.androidplot.Plot;
 import com.androidplot.util.PlotStatistics;
@@ -18,14 +19,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import java.lang.Math.*;
 import medinf.medinfsignals.Bluetooth;
 
 public class SensorPlot extends Activity
 {
     // bluetooth thread
     private BluetoothThread readBThread;
+    Button b;
 
-    private static final int HISTORY_SIZE = 300;
+    private static final int HISTORY_SIZE = 1024;
 
     private int BT_MSG = 2342;
     private XYPlot lightHistoryPlot = null;
@@ -37,6 +40,8 @@ public class SensorPlot extends Activity
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+
+        b = (Button)findViewById(R.id.button);
 
         //Display bleibt aktiv
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -54,10 +59,11 @@ public class SensorPlot extends Activity
         lightHistoryPlot = (XYPlot) findViewById(R.id.lightHistoryPlot);
         lightHistoryPlot.setDomainBoundaries(0, HISTORY_SIZE, BoundaryMode.FIXED);
         lightHistorySeries = new SimpleXYSeries("Brightness");
+        lightHistorySeries.useImplicitXVals();
 
-        lightHistoryPlot.setRangeBoundaries(0, 1024, BoundaryMode.FIXED);
+        lightHistoryPlot.setRangeBoundaries(0, 9, BoundaryMode.FIXED);
         lightHistoryPlot.setDomainStepValue(HISTORY_SIZE/10);
-        lightHistoryPlot.addSeries(lightHistorySeries, new LineAndPointFormatter(Color.rgb(200, 100, 100), null, null, null));
+        lightHistoryPlot.addSeries(lightHistorySeries, new LineAndPointFormatter(Color.rgb(255, 0, 0), null, null, null));
         lightHistoryPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
         lightHistoryPlot.setDomainLabel("Time");
         lightHistoryPlot.getDomainLabelWidget().pack();
@@ -73,21 +79,30 @@ public class SensorPlot extends Activity
     class BluetoothThread extends Thread {
         volatile boolean fPause = false;
 
+        int i=0;
+
         public void run() {
-            short value = 0;
+            int value = 0;
             while (true) {
                 //Werte von Bluetooth.read() auslesen und dem Handler übergeben
                 //TODO:
 
-                //try {
-                    //value = Bluetooth.read();
-                    value = 512;
-                //} catch (IOException e) {
-                    // panic!
-                //}
+                try {
+                    int v = (int)Bluetooth.read();
 
-                Message msg = Message.obtain(messageHandler, BT_MSG, value, 0);
-                messageHandler.sendMessage(msg);
+                    if (v > 128)
+                        value = 6;
+                    else value = 3;
+                //i++;
+                //i=i%360;
+                //value = 200+(int)(100*(1.0+Math.sin((double)(i))));
+                } catch (IOException e) {
+                    // panic!
+                }
+
+                //Message msg = Message.obtain(messageHandler, BT_MSG, value, 0);
+                messageHandler.obtainMessage(BT_MSG, value, 0).sendToTarget();
+                //messageHandler.sendMessage(msg);
             }
         }
 
@@ -110,7 +125,8 @@ public class SensorPlot extends Activity
 
     private Handler messageHandler = new Handler() {
         public void handleMessage(Message msg) {
-            drawData(msg.arg1);
+            if (msg.what == BT_MSG)
+                drawData(msg.arg1);
         }
     };
 
@@ -172,7 +188,7 @@ public class SensorPlot extends Activity
         if (lightHistorySeries.size() > HISTORY_SIZE) {
             lightHistorySeries.removeFirst();
         }
-
+        //b.setText(value + "");
         // add latest sample to history
         lightHistorySeries.addLast(null, value);
     }
