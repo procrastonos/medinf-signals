@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.WindowManager;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.io.IOException;
 
 import medinf.medinfsignals.Bluetooth;
@@ -16,11 +18,12 @@ interface ValueRecievedListener{
 	public short ValueRecieved(short value);
 }
 
-class ValueRecievedClass implements ValueRecievedListener{
-	@Override 
-	public short ValueRecieved(short value){
-		return value;
-	}
+class ValueRecievedClass implements ValueRecievedListener {
+    @Override
+    public short ValueRecieved(short value) {
+        return value;
+    }
+}
 
 
 public class OrientedSensor extends Activity
@@ -34,37 +37,25 @@ public class OrientedSensor extends Activity
     private class BluetoothThread extends Thread {
 	List<ValueRecievedListener> listeners = new ArrayList<ValueRecievedListener>();
 
-    	volatile boolean fPause = false;
-	   public void addListener(ValueRecievedListener toAdd){
-		listener.add(toAdd);
+        volatile boolean fPause = false;
+	    public void addListener(ValueRecievedListener toAdd){
+		    listeners.add(toAdd);
 	   }		
     	   public void run() {
-<<<<<<< HEAD
-		   short value = 0; 
-=======
 		   short value = 0;
->>>>>>> 1736483f2ca275936d25f3b09e7bc0bceb37c871
     		   while (true) {
- 	    		  		//Werte von Bluetooth.read() auslesen und dem Handler übergeben
-    	    		  	//TODO:
-				// Bluetooth.read() auslesen
-				//value = Bluetooth.read();
-				// Listener auslösen und value übergeben
-<<<<<<< HEAD
-				if (value>0){
-					for (ValueRecievedListener vrl : listener)
-						vrl.ValueRecieved(value);
-				}
+                   //Werte von Bluetooth.read() auslesen und dem Handler übergeben
+                   //TODO:
+                   // Bluetooth.read() auslesen
+                   //value = Bluetooth.read();
+                   // Listener auslösen und value übergeben
 
+                   if (value > 0) {
+                       for (ValueRecievedListener vrl : listeners)
+                           vrl.ValueRecieved(value);
+                   }
+               }
 	   	   }
-	   }
-=======
-				/*for (ValueRecievedListener VRL : listener)
-					vrl.ValueRecieved(value);
-*/
-	   	        }
-	       }
->>>>>>> 1736483f2ca275936d25f3b09e7bc0bceb37c871
     	   
     	    /**
     		* Stoppt den ausgefuehrten Thread
