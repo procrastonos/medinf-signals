@@ -63,18 +63,28 @@ public class SensorPlot extends Activity
         public void run() {
             Log.v("run", "Trying to read...");
             byte[] buffer = new byte[2];  // buffer store for the stream
+	    byte[] buffer2 = new byte[2];
+	    byte[] finalbuffer = new byte[2];
             int bytes; // bytes returned from read()
-
+	    int value; // Upacked buffer
             // Keep listening to the InputStream until an exception occurs
             while (true) {
                 try {
                     bytes = mmInStream.available();
-
                     if (bytes > 0) {
                         // Read from the InputStream
-                        mmInStream.read(buffer);
+			if (buffer[0]&128)
+                        	mmInStream.read(buffer);
+				finalbuffer = buffer;
+			if !(buffer[0]&128){
+				finalbuffer[0] = buffer[1];
+				mmInStream.read(buffer);
+				finalbuffer[1] = buffer[0];
+			}
+			value =(int) (finalbuffer[0]-128 << 5 + finalbuffer[1]);
+			if buffer 
                         // Send the obtained bytes to the UI activity
-                        messageHandler.obtainMessage(MESSAGE_READ, (int) buffer[0], 0)
+                        messageHandler.obtainMessage(MESSAGE_READ, value, 0)
                                 .sendToTarget();
                     }
                 } catch (IOException e) {
