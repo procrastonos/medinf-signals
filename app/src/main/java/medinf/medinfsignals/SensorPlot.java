@@ -171,13 +171,6 @@ public class SensorPlot extends Activity
 
     @Override
     public void onDestroy() {
-        try {
-            //Bluetooth-Verbindung schließen
-            Bluetooth.disconnect();
-        } catch (IOException e) {
-            Log.v("Plot destroy", "Failed to disconnect from bt");
-        }
-
         redrawer.finish();
         //Beendet aktuelle Aktivity
         finish();
@@ -186,12 +179,6 @@ public class SensorPlot extends Activity
     }
 
     public void onFinish(){
-        try {
-            //Bluetooth-Verbindung schließen
-            Bluetooth.disconnect();
-        } catch (IOException e) {
-            Log.v("Plot destroy", "Failed to disconnect from bt");
-        }
         //Beendet aktuelle Aktivity
         finish();
         super.onDestroy();
@@ -199,12 +186,6 @@ public class SensorPlot extends Activity
 
     public void onBackPressed()
     {
-        try {
-            //Bluetooth-Verbindung schließen
-            Bluetooth.disconnect();
-        } catch (IOException e) {
-            Log.v("Plot destroy", "Failed to disconnect from bt");
-        }
         //Beendet die Aktivity und gibt Speicher frei
         System.exit(0);
         super.onBackPressed();

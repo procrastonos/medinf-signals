@@ -229,11 +229,6 @@ public class MainActivity extends Activity {
      * Speicherplatz freizugeben.
      */
     protected void onDestroy() {
-        try {
-            Bluetooth.disconnect();
-        } catch (IOException e) {
-            Log.v("Bluetooth disconnect", "Failed to disconnect from bt device");
-        }
         super.onDestroy();
         unregisterReceiver(broadcastReceiver);	//BroadcastReceiver deregistrieren
     }
