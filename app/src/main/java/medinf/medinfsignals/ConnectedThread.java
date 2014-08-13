@@ -10,6 +10,7 @@ import java.io.OutputStream;
 
 public class ConnectedThread extends Thread {
     public static int MESSAGE_READ = 1234;
+
     private Handler mHandler;
     private final BluetoothSocket mmSocket;
     private final InputStream mmInStream;

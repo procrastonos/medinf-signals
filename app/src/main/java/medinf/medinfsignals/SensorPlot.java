@@ -11,7 +11,6 @@ import android.view.WindowManager;
 import android.widget.Button;
 
 import com.androidplot.Plot;
-import com.androidplot.util.PlotStatistics;
 import com.androidplot.util.Redrawer;
 import com.androidplot.xy.*;
 
@@ -19,19 +18,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
-import java.lang.Math.*;
-import medinf.medinfsignals.Bluetooth;
 
 public class SensorPlot extends Activity
 {
     private ConnectedThread connectedThread;
     private Handler messageHandler;
     // bluetooth thread
-    private BluetoothThread readBThread;
     Button b;
 
     public static int MESSAGE_READ = 1234;
@@ -78,8 +72,7 @@ public class SensorPlot extends Activity
                     bytes = mmInStream.read(buffer);
                     // Send the obtained bytes to the UI activity
                     //mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer)
-                    Log.v("bytes", ""+bytes);
-                    messageHandler.obtainMessage(MESSAGE_READ, bytes, 0)
+                    messageHandler.obtainMessage(MESSAGE_READ, (int)buffer[0], 0)
                             .sendToTarget();
                 } catch (IOException e) {
                     Log.v("io", "Failed to read from socket!");
@@ -110,6 +103,7 @@ public class SensorPlot extends Activity
 
         messageHandler = new Handler() {
             public void handleMessage(Message msg) {
+                Log.v("handle", "Handling messages");
                 if (msg.what == MESSAGE_READ)
                 {
                     //byte[] buff = (byte[])msg.obj;
@@ -128,13 +122,6 @@ public class SensorPlot extends Activity
 
         //Display bleibt aktiv
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-        //Wenn Thread nicht gestartet, versuche ihn zu starten
-        if (readBThread == null) {
-
-            readBThread = new BluetoothThread();
-            readBThread.start();
-        }
 
         setContentView(R.layout.sensor_plot_layout);
 
@@ -157,47 +144,6 @@ public class SensorPlot extends Activity
         lightHistoryPlot.setDomainValueFormat(new DecimalFormat("#"));
 
         redrawer = new Redrawer(Arrays.asList(new Plot[]{lightHistoryPlot}), 100, false);
-    }
-
-    class BluetoothThread extends Thread {
-        volatile boolean fPause = false;
-
-        int i=0;
-
-        public void run() {
-            int value = 0;
-            while (true) {
-                //Werte von Bluetooth.read() auslesen und dem Handler übergeben
-                //TODO:
-
-                try {
-                    value = (int)Bluetooth.read();
-                //value = 200+(int)(100*(1.0+Math.sin((double)(i))));
-                } catch (IOException e) {
-                    Log.v("Bluetooth read", "Failed to read from bt device");
-                }
-
-                //Message msg = Message.obtain(messageHandler, BT_MSG, value, 0);
-                messageHandler.obtainMessage(BT_MSG, value, 0).sendToTarget();
-                //messageHandler.sendMessage(msg);
-            }
-        }
-
-
-        /**
-         * Stoppt den ausgefuehrten Thread
-         */
-        public void stopT() {
-            fPause = true;
-        }
-
-
-        /**
-         * Startet den gestoppten Thread
-         */
-        public void startT() {
-            fPause = false;
-        }
     }
 
     @Override
