@@ -6,6 +6,7 @@
     <string name="discovered_devices">Gefundene Geräte</string>
     <string name="search_started">Suche nach Geräten gestartet !</string>
     <string name="search_ended">Suche nach Geräten beendet !</string>
+    <string name="connection_failed">Verbindung zu Bluetooth Device fehlgeschlagen!</string>
     <string name="find_new_device">Neues Gerät gefunden. Name:</string>
     <string name="startstop">Start/Stop</string>
     <string name="exitConfirmText">Möchten Sie die Anwendung wirklich beenden?</string>

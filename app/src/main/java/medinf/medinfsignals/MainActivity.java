@@ -153,8 +153,13 @@ public class MainActivity extends Activity {
                     ConnectThread connectThread = new ConnectThread(devices.get((int)id), MY_UUID);
                     connectThread.run();
 
-                    Intent intent = new Intent(MainActivity.this, SensorPlot.class);
-                    startActivity(intent);
+                    if (App.socket == null) {
+                        Toast toast = Toast.makeText(getApplicationContext(), getResources().getString(R.string.connection_failed), Toast.LENGTH_SHORT);
+                        toast.show();
+                    } else {
+                        Intent intent = new Intent(MainActivity.this, SensorPlot.class);
+                        startActivity(intent);
+                    }
                 }
             }
         });

@@ -78,6 +78,13 @@ public class SensorPlot extends Activity
                     Log.v("io", "Failed to read from socket!");
                     break;
                 }
+
+                try {
+                    sleep(10, 0);
+                }
+                catch (InterruptedException e) {
+                }
+
             }
         }
 
@@ -107,7 +114,7 @@ public class SensorPlot extends Activity
                 if (msg.what == MESSAGE_READ)
                 {
                     //byte[] buff = (byte[])msg.obj;
-                    int val = (int)(msg.arg1);
+                    int val = (int)(msg.arg1 & 0xFF);
 
                     Log.d("brightness value", "" + val);
                     drawData(val);
@@ -115,8 +122,6 @@ public class SensorPlot extends Activity
             }
         };
 
-        connectedThread = new ConnectedThread(App.socket);
-        connectedThread.run();
 
         b = (Button)findViewById(R.id.button);
 
@@ -131,7 +136,7 @@ public class SensorPlot extends Activity
         lightHistorySeries = new SimpleXYSeries("Brightness");
         lightHistorySeries.useImplicitXVals();
 
-        lightHistoryPlot.setRangeBoundaries(0, 260, BoundaryMode.FIXED);
+        lightHistoryPlot.setRangeBoundaries(-200, 260, BoundaryMode.FIXED);
         lightHistoryPlot.setDomainStepValue(HISTORY_SIZE/10);
         lightHistoryPlot.addSeries(lightHistorySeries, new LineAndPointFormatter(Color.rgb(255, 0, 0), null, null, null));
         lightHistoryPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
@@ -144,6 +149,9 @@ public class SensorPlot extends Activity
         lightHistoryPlot.setDomainValueFormat(new DecimalFormat("#"));
 
         redrawer = new Redrawer(Arrays.asList(new Plot[]{lightHistoryPlot}), 100, false);
+
+        connectedThread = new ConnectedThread(App.socket);
+        connectedThread.run();
     }
 
     @Override
