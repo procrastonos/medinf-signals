@@ -68,19 +68,22 @@ public class SensorPlot extends Activity
             // Keep listening to the InputStream until an exception occurs
             while (true) {
                 try {
-                    // Read from the InputStream
-                    bytes = mmInStream.read(buffer);
-                    // Send the obtained bytes to the UI activity
-                    //mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer)
-                    messageHandler.obtainMessage(MESSAGE_READ, (int)buffer[0], 0)
-                            .sendToTarget();
+                    bytes = mmInStream.available();
+
+                    if (bytes > 0) {
+                        // Read from the InputStream
+                        mmInStream.read(buffer);
+                        // Send the obtained bytes to the UI activity
+                        messageHandler.obtainMessage(MESSAGE_READ, (int) buffer[0], 0)
+                                .sendToTarget();
+                    }
                 } catch (IOException e) {
                     Log.v("io", "Failed to read from socket!");
                     break;
                 }
 
                 try {
-                    sleep(10, 0);
+                    sleep(1, 0);
                 }
                 catch (InterruptedException e) {
                 }
@@ -110,7 +113,6 @@ public class SensorPlot extends Activity
 
         messageHandler = new Handler() {
             public void handleMessage(Message msg) {
-                Log.v("handle", "Handling messages");
                 if (msg.what == MESSAGE_READ)
                 {
                     //byte[] buff = (byte[])msg.obj;
@@ -136,7 +138,7 @@ public class SensorPlot extends Activity
         lightHistorySeries = new SimpleXYSeries("Brightness");
         lightHistorySeries.useImplicitXVals();
 
-        lightHistoryPlot.setRangeBoundaries(-200, 260, BoundaryMode.FIXED);
+        lightHistoryPlot.setRangeBoundaries(0, 260, BoundaryMode.FIXED);
         lightHistoryPlot.setDomainStepValue(HISTORY_SIZE/10);
         lightHistoryPlot.addSeries(lightHistorySeries, new LineAndPointFormatter(Color.rgb(255, 0, 0), null, null, null));
         lightHistoryPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
@@ -151,7 +153,7 @@ public class SensorPlot extends Activity
         redrawer = new Redrawer(Arrays.asList(new Plot[]{lightHistoryPlot}), 100, false);
 
         connectedThread = new ConnectedThread(App.socket);
-        connectedThread.run();
+        connectedThread.start();
     }
 
     @Override

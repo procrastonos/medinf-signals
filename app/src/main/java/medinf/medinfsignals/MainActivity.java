@@ -151,7 +151,7 @@ public class MainActivity extends Activity {
 
 
                     ConnectThread connectThread = new ConnectThread(devices.get((int)id), MY_UUID);
-                    connectThread.run();
+                    connectThread.start();
 
                     if (App.socket == null) {
                         Toast toast = Toast.makeText(getApplicationContext(), getResources().getString(R.string.connection_failed), Toast.LENGTH_SHORT);
