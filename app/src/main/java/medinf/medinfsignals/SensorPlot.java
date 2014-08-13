@@ -63,29 +63,36 @@ public class SensorPlot extends Activity
         public void run() {
             Log.v("run", "Trying to read...");
             byte[] buffer = new byte[2];  // buffer store for the stream
-	    byte[] buffer2 = new byte[2];
-	    byte[] finalbuffer = new byte[2];
+	        //byte[] finalBuffer = new byte[2];
+            int low = 0;
+
             int bytes; // bytes returned from read()
-	    int value; // Upacked buffer
+	        int value; // Upacked buffer
+
             // Keep listening to the InputStream until an exception occurs
             while (true) {
                 try {
                     bytes = mmInStream.available();
+
+
+
                     if (bytes > 0) {
-                        // Read from the InputStream
-			if (buffer[0]&128)
-                        	mmInStream.read(buffer);
-				finalbuffer = buffer;
-			if !(buffer[0]&128){
-				finalbuffer[0] = buffer[1];
-				mmInStream.read(buffer);
-				finalbuffer[1] = buffer[0];
-			}
-			value =(int) (finalbuffer[0]-128 << 5 + finalbuffer[1]);
-			if buffer 
-                        // Send the obtained bytes to the UI activity
-                        messageHandler.obtainMessage(MESSAGE_READ, value, 0)
-                                .sendToTarget();
+                        mmInStream.read(buffer);
+
+                        int h = (int)buffer[0] & 0x000000FF;
+                        int l = (int)buffer[1] & 0x000000FF;
+
+                        /*if ((h & 128) == 0) {
+                            int lastlow = low;
+                            low = h;
+                            h = l;
+                            l = lastlow;
+                        }*/
+                        if ((h & 128) == 128 && (l & 128) == 0) {
+                            value = ((h & 0x1f) << 5) + (l & 0x1f);
+                            // Send the obtained bytes to the UI activity
+                            messageHandler.obtainMessage(MESSAGE_READ, value, 0).sendToTarget();
+                        }
                     }
                 } catch (IOException e) {
                     Log.v("io", "Failed to read from socket!");
@@ -125,10 +132,7 @@ public class SensorPlot extends Activity
             public void handleMessage(Message msg) {
                 if (msg.what == MESSAGE_READ)
                 {
-                    //byte[] buff = (byte[])msg.obj;
-                    int val = (int)(msg.arg1 & 0xFF);
-
-                    Log.d("brightness value", "" + val);
+                    int val = (int)(msg.arg1);
                     drawData(val);
                 }
             }
@@ -148,7 +152,7 @@ public class SensorPlot extends Activity
         lightHistorySeries = new SimpleXYSeries("Brightness");
         lightHistorySeries.useImplicitXVals();
 
-        lightHistoryPlot.setRangeBoundaries(0, 260, BoundaryMode.FIXED);
+        lightHistoryPlot.setRangeBoundaries(0, 1024, BoundaryMode.FIXED);
         lightHistoryPlot.setDomainStepValue(HISTORY_SIZE/10);
         lightHistoryPlot.addSeries(lightHistorySeries, new LineAndPointFormatter(Color.rgb(255, 0, 0), null, null, null));
         lightHistoryPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
