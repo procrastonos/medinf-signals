@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Button;
 
@@ -61,7 +62,7 @@ public class SensorPlot extends Activity
         lightHistorySeries = new SimpleXYSeries("Brightness");
         lightHistorySeries.useImplicitXVals();
 
-        lightHistoryPlot.setRangeBoundaries(0, 9, BoundaryMode.FIXED);
+        lightHistoryPlot.setRangeBoundaries(0, 260, BoundaryMode.FIXED);
         lightHistoryPlot.setDomainStepValue(HISTORY_SIZE/10);
         lightHistoryPlot.addSeries(lightHistorySeries, new LineAndPointFormatter(Color.rgb(255, 0, 0), null, null, null));
         lightHistoryPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
@@ -88,16 +89,10 @@ public class SensorPlot extends Activity
                 //TODO:
 
                 try {
-                    int v = (int)Bluetooth.read();
-
-                    if (v > 128)
-                        value = 6;
-                    else value = 3;
-                //i++;
-                //i=i%360;
+                    value = (int)Bluetooth.read();
                 //value = 200+(int)(100*(1.0+Math.sin((double)(i))));
                 } catch (IOException e) {
-                    // panic!
+                    Log.v("Bluetooth read", "Failed to read from bt device");
                 }
 
                 //Message msg = Message.obtain(messageHandler, BT_MSG, value, 0);
@@ -126,7 +121,10 @@ public class SensorPlot extends Activity
     private Handler messageHandler = new Handler() {
         public void handleMessage(Message msg) {
             if (msg.what == BT_MSG)
+            {
+                Log.d("brightness value", ""+msg.arg1);
                 drawData(msg.arg1);
+            }
         }
     };
 
@@ -149,6 +147,7 @@ public class SensorPlot extends Activity
             //Bluetooth-Verbindung schließen
             Bluetooth.disconnect();
         } catch (IOException e) {
+            Log.v("Plot destroy", "Failed to disconnect from bt");
         }
 
         redrawer.finish();
@@ -163,6 +162,7 @@ public class SensorPlot extends Activity
             //Bluetooth-Verbindung schließen
             Bluetooth.disconnect();
         } catch (IOException e) {
+            Log.v("Plot destroy", "Failed to disconnect from bt");
         }
         //Beendet aktuelle Aktivity
         finish();
@@ -175,7 +175,7 @@ public class SensorPlot extends Activity
             //Bluetooth-Verbindung schließen
             Bluetooth.disconnect();
         } catch (IOException e) {
-            //
+            Log.v("Plot destroy", "Failed to disconnect from bt");
         }
         //Beendet die Aktivity und gibt Speicher frei
         System.exit(0);

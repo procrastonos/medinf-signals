@@ -8,6 +8,9 @@ import java.util.UUID;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.util.Log;
+
+
 
 
 /**
@@ -38,7 +41,8 @@ public class Bluetooth {
             input = socket.getInputStream();
             output = socket.getOutputStream();
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            Log.v("Socket creation", "Failed to create bluetooth socket");
         }
     }
 
@@ -61,9 +65,12 @@ public class Bluetooth {
             socket.connect();
         } catch (IOException connectException) {
             // Unable to connect; close the socket and get out
+            Log.v("Bluetooth connection", "Failed to connect to bluetooth device");
             try {
                 socket.close();
-            } catch (IOException closeException) { }
+            } catch (IOException closeException) {
+                Log.v("Bluetooth closing", "Failed to close bluetooth socket");
+            }
         }
     }
 
