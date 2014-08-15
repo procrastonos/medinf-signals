@@ -29,12 +29,20 @@ public class SensorPlot extends Activity
     Button b;
 
     public static int MESSAGE_READ = 1234;
-    private static final int HISTORY_SIZE = 1024;
+    private static final int LIGHT = 0;
+    private static final int EMG = 1;
+    private static final int HISTORY_SIZE = 600;
+    private static final int VALUE_SIZE = 1024;
+    private static final int VALUE_OFFSET = 0;
 
     private int BT_MSG = 2342;
-    private XYPlot lightHistoryPlot = null;
+    private XYPlot historyPlot = null;
+    private XYPlot frequencyPlot = null;
     private SimpleXYSeries lightHistorySeries;
-    private Redrawer redrawer;
+    private SimpleXYSeries emgHistorySeries;
+    private SimpleXYSeries freqSeries;
+    private Redrawer histRedrawer;
+    private Redrawer freqRedrawer;
 
 
     private class ConnectedThread extends Thread {
@@ -74,24 +82,20 @@ public class SensorPlot extends Activity
                 try {
                     bytes = mmInStream.available();
 
-
-
                     if (bytes > 0) {
                         mmInStream.read(buffer);
 
                         int h = (int)buffer[0] & 0x000000FF;
                         int l = (int)buffer[1] & 0x000000FF;
 
-                        /*if ((h & 128) == 0) {
-                            int lastlow = low;
-                            low = h;
-                            h = l;
-                            l = lastlow;
-                        }*/
-                        if ((h & 128) == 128 && (l & 128) == 0) {
+                        int c_h = (h & 0x60) >> 5;
+                        int c_l = (l & 0x60) >> 5;
+
+                        if ((h & 128) == 128 && (l & 128) == 0 && c_h == c_l) {
                             value = ((h & 0x1f) << 5) + (l & 0x1f);
+
                             // Send the obtained bytes to the UI activity
-                            messageHandler.obtainMessage(MESSAGE_READ, value, 0).sendToTarget();
+                            messageHandler.obtainMessage(MESSAGE_READ, value, c_h).sendToTarget();
                         }
                     }
                 } catch (IOException e) {
@@ -133,38 +137,57 @@ public class SensorPlot extends Activity
                 if (msg.what == MESSAGE_READ)
                 {
                     int val = (int)(msg.arg1);
-                    drawData(val);
+                    int code = (int)(msg.arg2);
+                    drawData(val, code);
                 }
             }
         };
-
-
-        b = (Button)findViewById(R.id.button);
 
         //Display bleibt aktiv
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         setContentView(R.layout.sensor_plot_layout);
 
-        // setup history plot
-        lightHistoryPlot = (XYPlot) findViewById(R.id.lightHistoryPlot);
-        lightHistoryPlot.setDomainBoundaries(0, HISTORY_SIZE, BoundaryMode.FIXED);
+        // set up series
         lightHistorySeries = new SimpleXYSeries("Brightness");
         lightHistorySeries.useImplicitXVals();
+        emgHistorySeries = new SimpleXYSeries("EMG");
+        emgHistorySeries.useImplicitXVals();
 
-        lightHistoryPlot.setRangeBoundaries(0, 1024, BoundaryMode.FIXED);
-        lightHistoryPlot.setDomainStepValue(HISTORY_SIZE/10);
-        lightHistoryPlot.addSeries(lightHistorySeries, new LineAndPointFormatter(Color.rgb(255, 0, 0), null, null, null));
-        lightHistoryPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
-        lightHistoryPlot.setDomainLabel("Time");
-        lightHistoryPlot.getDomainLabelWidget().pack();
-        lightHistoryPlot.setRangeLabel("Brightness");
-        lightHistoryPlot.getRangeLabelWidget().pack();
+        // set up history plot
+        historyPlot = (XYPlot) findViewById(R.id.historyPlot);
+        historyPlot.setDomainBoundaries(0, HISTORY_SIZE, BoundaryMode.FIXED);
+        historyPlot.setRangeBoundaries(VALUE_OFFSET, VALUE_SIZE, BoundaryMode.FIXED);
+        historyPlot.setDomainStepValue(HISTORY_SIZE/10);
+        historyPlot.addSeries(lightHistorySeries, new LineAndPointFormatter(Color.rgb(255, 0, 0), null, null, null));
+        historyPlot.addSeries(emgHistorySeries, new LineAndPointFormatter(Color.rgb(0, 0, 255), null, null, null));
+        historyPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
+        historyPlot.setDomainLabel("Time");
+        historyPlot.getDomainLabelWidget().pack();
+        historyPlot.setRangeLabel("Brightness/EMG Val");
+        historyPlot.getRangeLabelWidget().pack();
+        historyPlot.setRangeValueFormat(new DecimalFormat("#"));
+        historyPlot.setDomainValueFormat(new DecimalFormat("#"));
 
-        lightHistoryPlot.setRangeValueFormat(new DecimalFormat("#"));
-        lightHistoryPlot.setDomainValueFormat(new DecimalFormat("#"));
+        // set up frequency plot
+        frequencyPlot = (XYPlot) findViewById(R.id.frequencyPlot);
+        frequencyPlot.setDomainBoundaries(0, 100, BoundaryMode.FIXED);
+        frequencyPlot.setRangeBoundaries(0, VALUE_SIZE, BoundaryMode.FIXED);
+        frequencyPlot.setDomainStepValue(HISTORY_SIZE/10);
+        frequencyPlot.addSeries(emgHistorySeries, new LineAndPointFormatter(Color.rgb(0, 255, 0), null, null, null));
+        frequencyPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
+        frequencyPlot.setDomainLabel("Frequency");
+        frequencyPlot.getDomainLabelWidget().pack();
+        frequencyPlot.setRangeLabel("Apmlitude");
+        frequencyPlot.getRangeLabelWidget().pack();
+        frequencyPlot.setRangeValueFormat(new DecimalFormat("#"));
+        frequencyPlot.setDomainValueFormat(new DecimalFormat("#"));
 
-        redrawer = new Redrawer(Arrays.asList(new Plot[]{lightHistoryPlot}), 100, false);
+
+        histRedrawer = new Redrawer(Arrays.asList(new Plot[]{historyPlot}), 100, false);
+        freqRedrawer = new Redrawer(Arrays.asList(new Plot[]{frequencyPlot}), 100, false);
+        histRedrawer.start();
+        freqRedrawer.start();
 
         connectedThread = new ConnectedThread(App.socket);
         connectedThread.start();
@@ -173,19 +196,21 @@ public class SensorPlot extends Activity
     @Override
     public void onResume() {
         super.onResume();
-        redrawer.start();
+        histRedrawer.start();
+        freqRedrawer.start();
     }
 
     @Override
     public void onPause()
     {
-        redrawer.pause();
-        super.onPause();
+        histRedrawer.start();
+        freqRedrawer.start();
     }
 
     @Override
     public void onDestroy() {
-        redrawer.finish();
+        histRedrawer.start();
+        freqRedrawer.start();
         //Beendet aktuelle Aktivity
         finish();
 
@@ -206,13 +231,25 @@ public class SensorPlot extends Activity
     }
 
     // new sensor data
-    public synchronized void drawData(int value) {
-        // remove oldest sample on history
-        if (lightHistorySeries.size() > HISTORY_SIZE) {
-            lightHistorySeries.removeFirst();
+    public synchronized void drawData(int value, int code) {
+
+        if (code == LIGHT) {
+            // remove oldest sample on history
+            if (lightHistorySeries.size() > HISTORY_SIZE) {
+                lightHistorySeries.removeFirst();
+            }
+
+            // add latest sample to history
+            lightHistorySeries.addLast(null, value);
         }
-        //b.setText(value + "");
-        // add latest sample to history
-        lightHistorySeries.addLast(null, value);
+        if (code == EMG) {
+            // remove oldest sample on history
+            if (emgHistorySeries.size() > HISTORY_SIZE) {
+                emgHistorySeries.removeFirst();
+            }
+
+            // add latest sample to history
+            emgHistorySeries.addLast(null, value);
+        }
     }
 }

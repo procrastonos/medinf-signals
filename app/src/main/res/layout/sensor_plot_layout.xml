@@ -4,17 +4,23 @@
     android:layout_width="fill_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
-    <LinearLayout
+    <!--<LinearLayout
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
         android:orientation="horizontal"
-        android:layout_weight="10">
+        android:layout_weight="10">-->
         <com.androidplot.xy.XYPlot
-            android:id="@+id/lightHistoryPlot"
+            android:id="@+id/historyPlot"
             android:layout_height="fill_parent"
-            android:layout_width="fill_parent"/>
-    </LinearLayout>
-    <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_weight="0.5"/>
+        <com.androidplot.xy.XYPlot
+            android:id="@+id/frequencyPlot"
+            android:layout_height="fill_parent"
+            android:layout_width="wrap_content"
+            android:layout_weight="0.5"/>
+    <!--</LinearLayout>-->
+    <!--<LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_weight="90"
@@ -26,5 +32,5 @@
             android:text="New Button"
             android:id="@+id/button"
             android:layout_weight="0.28" />
-    </LinearLayout>
+    </LinearLayout>-->
 </LinearLayout>
