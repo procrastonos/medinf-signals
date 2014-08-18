@@ -52,7 +52,7 @@ public class SensorPlot extends Activity
         super.onCreate(savedInstanceState);
 
         // create frequency analysis object (upper bound for window, upper bound for range, window)
-        freqAnalysis = new FreqAnalysis(FREQ_SIZE, 5, 40);
+        freqAnalysis = new FreqAnalysis(HISTORY_SIZE, FREQ_SIZE, 0, 30);
 
         // create the message handler
         messageHandler = new Handler()
@@ -122,7 +122,7 @@ public class SensorPlot extends Activity
         // set up frequency plot
         frequencyPlot = (XYPlot) findViewById(R.id.frequencyPlot);
         frequencyPlot.setDomainBoundaries(0, FREQ_SIZE, BoundaryMode.FIXED);
-        frequencyPlot.setRangeBoundaries(0, VALUE_SIZE, BoundaryMode.FIXED);
+        frequencyPlot.setRangeBoundaries(-VALUE_SIZE, VALUE_SIZE, BoundaryMode.FIXED);
         frequencyPlot.setDomainStepValue(FREQ_SIZE/10);
         frequencyPlot.addSeries(freqSeries, new LineAndPointFormatter(Color.rgb(0, 255, 0), null, null, null));
         frequencyPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);

@@ -10,10 +10,11 @@ import java.util.Arrays;
 public class FreqAnalysis
 {
     // constants
-    private static int FFT_SIZE = 0;
-    private static int IFT_SIZE = 0;
-    private static int lower = 0;
-    private static int higher = 0;
+    private int HISTORY_SIZE = 0;
+    private int FFT_SIZE = 0;
+    private int IFT_SIZE = 0;
+    private int lower = 0;
+    private int higher = 0;
 
     // data
     ArrayList<Float> data;
@@ -24,15 +25,15 @@ public class FreqAnalysis
     FloatFFT_1D fft;                                // forward fast fourier transform object
     FloatFFT_1D ift;                                // reverse fast fourier transform object
 
-    public FreqAnalysis(int fft_size, int lower, int higher)
+    public FreqAnalysis(int hist_size, int fft_size, int low, int high)
     {
         // set data sizes
+        HISTORY_SIZE = hist_size;
         FFT_SIZE = fft_size;
+        IFT_SIZE = fft_size;
         // prevent out of range values for lower and higher
-        lower = Math.max(0, Math.min(lower, higher));
-        higher = Math.min(FFT_SIZE, Math.max(lower, higher));
-        // IFT_SIZE = higher - lower;
-        IFT_SIZE = FFT_SIZE;
+        lower = Math.max(0, Math.min(low, high));
+        higher = Math.min(FFT_SIZE, Math.max(low, high));
 
         // initialize data
         data = new ArrayList<Float>();
@@ -86,26 +87,30 @@ public class FreqAnalysis
         Arrays.fill(ift_array, 0);
 
         // get the frequency values from the given window
-        for (int i=lower, j=0; i<higher; i++, j++)
+        for (int i=lower; i<higher; i++)
         {
-            ift_array[j] = fft_array[i];
+            ift_array[i] = fft_array[i];
         }
 
-        ift.realInverse(ift_array, true);
+        // set base frequency
+        if (lower > 0)
+            ift_array[0] = 68496;
 
-        /*// shift values to right border
-        //float [] shifted = new float[FFT_SIZE];
-        Arrays.fill(ift_array, 0);
-        int offset = FFT_SIZE - (higher - lower);
-        for (int i = offset, j =0; i<FFT_SIZE; i++, j++)
-            shifted[i] = ift_array[j];
-        */
+        // perform inverse fft
+        ift.realInverse(ift_array, true);
 
         // move floats back into ArrayList
         ArrayList<Float> ift_list = new ArrayList<Float>();
 
+        // shift by offset to right border
+        int offset = HISTORY_SIZE - FFT_SIZE;
+        float shift = 50;
+
+        for (int i=0; i < offset; i++)
+            ift_list.add(new Float(0));
+
         for (int i=0; i < ift_array.length; i++)
-            ift_list.add(ift_array[i]);
+            ift_list.add(ift_array[i] - shift);
 
         return ift_list;
     }
