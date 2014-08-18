@@ -37,20 +37,27 @@ import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
+    // constants
     private static final int REQUEST_ENABLE_BT = 1337;                                              // Intent Request Code for bluetooth enable
     private UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");                 // Bluetooth comm UUID
 
+    // GUI elements
     private ProgressBar progressSearch = null;                                                      // Progress bar
     private Button searchButton = null;                                                             // Bluetooth device search button
 
-    public static ArrayList<BluetoothDevice> devices = new ArrayList<BluetoothDevice>();                          // List of all found bluetooth devices
-    private List<Map<String, String>> data = new ArrayList<Map<String, String>>();                                    // List of mac and name of bluetooth devices
-
+    // adapter
     private SimpleAdapter deviceListAdapter = null;                                                 // Adapter for ListView
     private BluetoothAdapter mBluetoothAdapter;                                                     // Bluetooth adapter
 
+    // data
+    public static ArrayList<BluetoothDevice> devices = new ArrayList<BluetoothDevice>();                          // List of all found bluetooth devices
+    private List<Map<String, String>> data = new ArrayList<Map<String, String>>();                                    // List of mac and name of bluetooth devices
+
+    // local objects
+    ConnectThread connectThread;                                                                    // Thread for handling BT connection
     public InputStream is;                                                                          // input stream
 
+    // Broadcast receiver: handles search for BT devices
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver()
     {
         /**
@@ -102,7 +109,8 @@ public class MainActivity extends Activity {
      * Geraeteliste (deviceList) sowie des searchButtons.
      */
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
 
         // Layout setzen
@@ -127,36 +135,43 @@ public class MainActivity extends Activity {
 
         // GUI-Element deviceList holen
         final ListView deviceList =  (ListView)findViewById(R.id.deviceList);
+
         // GUI-Element header aufblähen
         TextView header = (TextView)getLayoutInflater().inflate(R.layout.listheader, null);
         header.setText(R.string.discovered_devices);	// Text setzen
 
         // Deaktivierung des Header (verbietet anklicken)
         header.setEnabled(false);
+
         // Header für deviceList setzen
         deviceList.addHeaderView(header);
+
         // Adapter für deviceList setzen
         deviceList.setAdapter(deviceListAdapter);
 
         // Listener für click events definieren
-        deviceList.setOnItemClickListener(new OnItemClickListener() {
+        deviceList.setOnItemClickListener(new OnItemClickListener()
+        {
             // ----2----
             //Bei Klick auf ein Bluetooth-Geraet weitere Suche abbrechen und Bluetooth-Geraet ueber die
             //id setzen. Neuen Intent erstellen und neue Activity starten.
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+            {
                 //nur auf Elemente in der Liste reagieren
                 if (view.isEnabled()){
-                    //TODO: Implementierung der Methode mit oben beschriebener Funktionalitaet
-
-
-                    ConnectThread connectThread = new ConnectThread(devices.get((int)id), MY_UUID);
+                    // create thread for connection handling1
+                    connectThread = new ConnectThread(devices.get((int)id), MY_UUID);
                     connectThread.start();
 
-                    if (App.socket == null) {
+                    // if socket == null -> connection failed (exceptions out of threads are difficult)
+                    if (App.socket == null)
+                    {
                         Toast toast = Toast.makeText(getApplicationContext(), getResources().getString(R.string.connection_failed), Toast.LENGTH_SHORT);
                         toast.show();
-                    } else {
+                    } else
+                    {
+                        // everything went fine, start new activity
                         Intent intent = new Intent(MainActivity.this, SensorPlot.class);
                         startActivity(intent);
                     }
@@ -167,7 +182,8 @@ public class MainActivity extends Activity {
         //Button zum Starten der Bluetooth-Geraete Suche holen
         searchButton = (Button)findViewById(R.id.searchButton);
         // Listener für click events definieren;
-        searchButton.setOnClickListener(new View.OnClickListener() {
+        searchButton.setOnClickListener(new View.OnClickListener()
+        {
 
             // ----1----
             //Holen des BluetoothAdapter;
@@ -176,8 +192,8 @@ public class MainActivity extends Activity {
             //von Bluetooth gestartet werden (Tipp: BluetoothAdapter.ACTION_REQUEST_ENABLE; startActivityForResult).
             //Ist Bluetooth aktiviert, wird die Liste der gefundenen Geraete zurueckgesetzt und eine neue Suche gestartet
             @Override
-            public void onClick(View v) {
-                //TODO: Implementierung der Methode mit oben beschriebener Funktionalitaet
+            public void onClick(View v)
+            {
                 // get bluetooth adapter
                 mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
                 // check if bluetooth adapter exists
@@ -196,7 +212,8 @@ public class MainActivity extends Activity {
     }
 
     // Bluetooth discovery starten
-    private void startBluetooth() {
+    private void startBluetooth()
+    {
         // Device-Liste zurücksetzen
         devices.clear();
         data.clear();
@@ -206,7 +223,8 @@ public class MainActivity extends Activity {
     }
 
     // activity result callback
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
         if (requestCode == REQUEST_ENABLE_BT)
             if (resultCode == RESULT_OK) // either RESULT_OK or RESULT_CANCELED
                 startBluetooth();
@@ -215,7 +233,8 @@ public class MainActivity extends Activity {
     /**
      * Activity neu laden, nachdem die letzte beendet wurde
      */
-    protected void refreshActivity () {
+    protected void refreshActivity ()
+    {
         //Activity beenden
         finish();
         //Neue Activity erzeugen
@@ -228,15 +247,21 @@ public class MainActivity extends Activity {
      * Aktivity durch finish() beendet wurde oder das System die Aktivity zerstoert, um temporaeren
      * Speicherplatz freizugeben.
      */
-    protected void onDestroy() {
+    protected void onDestroy()
+    {
         super.onDestroy();
+        // if socket and thread exist
+        if (App.socket != null && connectThread != null)
+            connectThread.cancel();
+
         unregisterReceiver(broadcastReceiver);	//BroadcastReceiver deregistrieren
     }
 
     /**
      * Erstellt ein Options-Menue
      */
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
         boolean result = super.onCreateOptionsMenu(menu);
         MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.menu, menu);
@@ -246,22 +271,27 @@ public class MainActivity extends Activity {
     /**
      * Erzeuge eine Auswahl fuer das Options-Menue
      */
-    public boolean onOptionsItemSelected(MenuItem item){
-        switch (item.getItemId()){
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        switch (item.getItemId())
+        {
             case R.id.exit:
                 new AlertDialog.Builder(this).setTitle(R.string.exitConfirmTitle)
                         .setMessage(R.string.exitConfirmText)
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener()
+                        {
 
-                            public void onClick(DialogInterface dialog, int which) {
+                            public void onClick(DialogInterface dialog, int which)
+                            {
                                 finish();
                                 System.exit(0);
                             }
                         })
                         .setNegativeButton("Abbrechen", new
-                                DialogInterface.OnClickListener() {
-
-                                    public void onClick(DialogInterface dialog, int which) {
+                                DialogInterface.OnClickListener()
+                                {
+                                    public void onClick(DialogInterface dialog, int which)
+                                    {
 
                                     }
                                 })

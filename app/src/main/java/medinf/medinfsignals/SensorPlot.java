@@ -1,144 +1,88 @@
 package medinf.medinfsignals;
 
 import android.app.Activity;
-import android.bluetooth.BluetoothSocket;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.WindowManager;
-import android.widget.Button;
 
 import com.androidplot.Plot;
 import com.androidplot.util.Redrawer;
 import com.androidplot.xy.*;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 
+import medinf.medinfsignals.ConnectedThread;
 
 public class SensorPlot extends Activity
 {
-    private ConnectedThread connectedThread;
-    private Handler messageHandler;
-    // bluetooth thread
-    Button b;
-
+    // constants
     public static int MESSAGE_READ = 1234;
     private static final int LIGHT = 0;
     private static final int EMG = 1;
+    private static final int FREQ_SIZE = 200;
     private static final int HISTORY_SIZE = 600;
     private static final int VALUE_SIZE = 1024;
     private static final int VALUE_OFFSET = 0;
 
-    private int BT_MSG = 2342;
+    // GUI elements
     private XYPlot historyPlot = null;
     private XYPlot frequencyPlot = null;
+
+    // plot objects
     private SimpleXYSeries lightHistorySeries;
     private SimpleXYSeries emgHistorySeries;
     private SimpleXYSeries freqSeries;
+    private SimpleXYSeries iftSeries;
     private Redrawer histRedrawer;
     private Redrawer freqRedrawer;
 
-
-    private class ConnectedThread extends Thread {
-        private final BluetoothSocket mmSocket;
-        private final InputStream mmInStream;
-        private final OutputStream mmOutStream;
-
-        public ConnectedThread(BluetoothSocket socket) {
-            mmSocket = socket;
-            InputStream tmpIn = null;
-            OutputStream tmpOut = null;
-
-            // Get the input and output streams, using temp objects because
-            // member streams are final
-            try {
-                tmpIn = socket.getInputStream();
-                tmpOut = socket.getOutputStream();
-            } catch (IOException e) {
-                Log.e("socket stream error", "Failed to get I/O Streams for BT socket!");
-            }
-
-            mmInStream = tmpIn;
-            mmOutStream = tmpOut;
-        }
-
-        public void run() {
-            Log.v("run", "Trying to read...");
-            byte[] buffer = new byte[2];  // buffer store for the stream
-	        //byte[] finalBuffer = new byte[2];
-            int low = 0;
-
-            int bytes; // bytes returned from read()
-	        int value; // Upacked buffer
-
-            // Keep listening to the InputStream until an exception occurs
-            while (true) {
-                try {
-                    bytes = mmInStream.available();
-
-                    if (bytes > 0) {
-                        mmInStream.read(buffer);
-
-                        int h = (int)buffer[0] & 0x000000FF;
-                        int l = (int)buffer[1] & 0x000000FF;
-
-                        int c_h = (h & 0x60) >> 5;
-                        int c_l = (l & 0x60) >> 5;
-
-                        if ((h & 128) == 128 && (l & 128) == 0 && c_h == c_l) {
-                            value = ((h & 0x1f) << 5) + (l & 0x1f);
-
-                            // Send the obtained bytes to the UI activity
-                            messageHandler.obtainMessage(MESSAGE_READ, value, c_h).sendToTarget();
-                        }
-                    }
-                } catch (IOException e) {
-                    Log.v("io", "Failed to read from socket!");
-                    break;
-                }
-
-                try {
-                    sleep(1, 0);
-                }
-                catch (InterruptedException e) {
-                }
-
-            }
-        }
-
-        /* Call this from the main activity to send data to the remote device */
-        public void write(byte[] bytes) {
-            try {
-                mmOutStream.write(bytes);
-            } catch (IOException e) { }
-        }
-
-        /* Call this from the main activity to shutdown the connection */
-        public void cancel() {
-            try {
-                mmSocket.close();
-            } catch (IOException e) { }
-        }
-    }
+    // local objects
+    private ConnectedThread connectedThread;        // thread handling reading from BT socket
+    private Handler messageHandler;                 // message handler to pass data from thread to activity
+    FreqAnalysis freqAnalysis;                      // frequency analysis object
 
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
 
-        messageHandler = new Handler() {
-            public void handleMessage(Message msg) {
+        // create frequency analysis object (upper bound for window, upper bound for range, window)
+        freqAnalysis = new FreqAnalysis(FREQ_SIZE, 5, 40);
+
+        // create the message handler
+        messageHandler = new Handler()
+        {
+            public void handleMessage(Message msg)
+            {
+                // select correct message
                 if (msg.what == MESSAGE_READ)
                 {
-                    int val = (int)(msg.arg1);
-                    int code = (int)(msg.arg2);
-                    drawData(val, code);
+                    // receive message value and function code
+                    int val = msg.arg1;
+                    int code = msg.arg2;
+
+                    // draw light data
+                    if (code == LIGHT)
+                        drawLight(val);
+
+                    // if value was an EMG(EOG) reading
+                    if (code == EMG)
+                    {
+                        // draw the plain EMG plot
+                        drawEMG(val);
+
+                        // update EMG data model
+                        freqAnalysis.update(val);
+
+                        //draw forward and reverse fft plots
+                        drawFFT(freqAnalysis.calcFFT());        // history window of 100
+                        drawIFT(freqAnalysis.calcIFT());   // frequency range of 2..40
+                    }
                 }
             }
         };
@@ -146,6 +90,7 @@ public class SensorPlot extends Activity
         //Display bleibt aktiv
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        // set view
         setContentView(R.layout.sensor_plot_layout);
 
         // set up series
@@ -153,6 +98,10 @@ public class SensorPlot extends Activity
         lightHistorySeries.useImplicitXVals();
         emgHistorySeries = new SimpleXYSeries("EMG");
         emgHistorySeries.useImplicitXVals();
+        freqSeries = new SimpleXYSeries("Frequency");
+        freqSeries.useImplicitXVals();
+        iftSeries = new SimpleXYSeries("LowiFrequencies");
+        iftSeries.useImplicitXVals();
 
         // set up history plot
         historyPlot = (XYPlot) findViewById(R.id.historyPlot);
@@ -161,6 +110,7 @@ public class SensorPlot extends Activity
         historyPlot.setDomainStepValue(HISTORY_SIZE/10);
         historyPlot.addSeries(lightHistorySeries, new LineAndPointFormatter(Color.rgb(255, 0, 0), null, null, null));
         historyPlot.addSeries(emgHistorySeries, new LineAndPointFormatter(Color.rgb(0, 0, 255), null, null, null));
+        historyPlot.addSeries(iftSeries, new LineAndPointFormatter(Color.rgb(0, 255, 0), null, null, null));
         historyPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
         historyPlot.setDomainLabel("Time");
         historyPlot.getDomainLabelWidget().pack();
@@ -171,10 +121,10 @@ public class SensorPlot extends Activity
 
         // set up frequency plot
         frequencyPlot = (XYPlot) findViewById(R.id.frequencyPlot);
-        frequencyPlot.setDomainBoundaries(0, 100, BoundaryMode.FIXED);
+        frequencyPlot.setDomainBoundaries(0, FREQ_SIZE, BoundaryMode.FIXED);
         frequencyPlot.setRangeBoundaries(0, VALUE_SIZE, BoundaryMode.FIXED);
-        frequencyPlot.setDomainStepValue(HISTORY_SIZE/10);
-        frequencyPlot.addSeries(emgHistorySeries, new LineAndPointFormatter(Color.rgb(0, 255, 0), null, null, null));
+        frequencyPlot.setDomainStepValue(FREQ_SIZE/10);
+        frequencyPlot.addSeries(freqSeries, new LineAndPointFormatter(Color.rgb(0, 255, 0), null, null, null));
         frequencyPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
         frequencyPlot.setDomainLabel("Frequency");
         frequencyPlot.getDomainLabelWidget().pack();
@@ -183,19 +133,65 @@ public class SensorPlot extends Activity
         frequencyPlot.setRangeValueFormat(new DecimalFormat("#"));
         frequencyPlot.setDomainValueFormat(new DecimalFormat("#"));
 
-
+        // set up re-drawer threads
         histRedrawer = new Redrawer(Arrays.asList(new Plot[]{historyPlot}), 100, false);
-        freqRedrawer = new Redrawer(Arrays.asList(new Plot[]{frequencyPlot}), 100, false);
+        freqRedrawer = new Redrawer(Arrays.asList(new Plot[]{frequencyPlot}), 10, false);
         histRedrawer.start();
         freqRedrawer.start();
 
-        connectedThread = new ConnectedThread(App.socket);
+        // set up and start connection handling thread
+        connectedThread = new ConnectedThread(App.socket, messageHandler);
         connectedThread.start();
     }
 
+    // draw light plot
+    private synchronized void drawLight(int value)
+    {
+        // remove oldest sample on history
+        if (lightHistorySeries.size() > HISTORY_SIZE)
+        {
+            lightHistorySeries.removeFirst();
+        }
+
+        // add latest sample to history
+        lightHistorySeries.addLast(null, value);
+    }
+
+    // draw EMG(EOG) plot
+    private synchronized void drawEMG(int value)
+    {
+        // remove oldest sample on history
+        if (emgHistorySeries.size() > HISTORY_SIZE)
+        {
+            emgHistorySeries.removeFirst();
+        }
+
+        // add latest sample to history
+        emgHistorySeries.addLast(null, value);
+
+    }
+
+    // draw forward FFT plot
+    private synchronized void drawFFT(ArrayList<Float> fft_data) {
+        freqSeries.setModel(fft_data, SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
+    }
+
+    // draw reverse FFT plot
+    private synchronized void drawIFT(ArrayList<Float> ift_data)
+    {
+        iftSeries.setModel(ift_data, SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
+    }
+
+    private synchronized void drawEyeDetect()
+    {
+
+    }
+
     @Override
-    public void onResume() {
+    public void onResume()
+    {
         super.onResume();
+        // re-draw plots
         histRedrawer.start();
         freqRedrawer.start();
     }
@@ -203,21 +199,28 @@ public class SensorPlot extends Activity
     @Override
     public void onPause()
     {
-        histRedrawer.start();
-        freqRedrawer.start();
+        histRedrawer.finish();
+        freqRedrawer.finish();
+
+        super.onPause();
     }
 
     @Override
-    public void onDestroy() {
-        histRedrawer.start();
-        freqRedrawer.start();
+    public void onDestroy()
+    {
+        histRedrawer.finish();
+        freqRedrawer.finish();
+        connectedThread.cancel();
         //Beendet aktuelle Aktivity
         finish();
 
         super.onDestroy();
     }
 
-    public void onFinish(){
+    public void onFinish()
+    {
+        histRedrawer.finish();
+        freqRedrawer.finish();
         //Beendet aktuelle Aktivity
         finish();
         super.onDestroy();
@@ -228,28 +231,5 @@ public class SensorPlot extends Activity
         //Beendet die Aktivity und gibt Speicher frei
         System.exit(0);
         super.onBackPressed();
-    }
-
-    // new sensor data
-    public synchronized void drawData(int value, int code) {
-
-        if (code == LIGHT) {
-            // remove oldest sample on history
-            if (lightHistorySeries.size() > HISTORY_SIZE) {
-                lightHistorySeries.removeFirst();
-            }
-
-            // add latest sample to history
-            lightHistorySeries.addLast(null, value);
-        }
-        if (code == EMG) {
-            // remove oldest sample on history
-            if (emgHistorySeries.size() > HISTORY_SIZE) {
-                emgHistorySeries.removeFirst();
-            }
-
-            // add latest sample to history
-            emgHistorySeries.addLast(null, value);
-        }
     }
 }
