@@ -18,12 +18,16 @@ public class FreqAnalysis
 
     // data
     ArrayList<Float> data;
-    float[] fft_array;
-    float[] ift_array;
+    private float[] fft_array;
+    private float[] ift_array;
+    private int threshold;
 
     // local objects
-    FloatFFT_1D fft;                                // forward fast fourier transform object
-    FloatFFT_1D ift;                                // reverse fast fourier transform object
+    private FloatFFT_1D fft;                                // forward fast fourier transform object
+    private FloatFFT_1D ift;                                // reverse fast fourier transform object
+    private float factor;
+    private float neg_threshold;
+    private float pos_threshold;
 
     public FreqAnalysis(int hist_size, int fft_size, int low, int high)
     {
@@ -57,7 +61,6 @@ public class FreqAnalysis
         // remove oldest sample
         if (data.size() > FFT_SIZE)
             data.remove(0);
-
         // calculate fft
         // fill float array from ArrayList
         int i = 0;
@@ -84,6 +87,33 @@ public class FreqAnalysis
 
         // perform inverse fft
         ift.realInverse(ift_array, true);
+
+        // calculate thresholds
+        int sum = 0;
+        int pos_sum, pos_counter = 0;
+        int neg_sum, neg_counter = 0;
+        for (Float datavalue : data){
+            sum += datavalue;
+        }
+        float average = sum/data.size();
+        ArrayList <float> ift_transformed;
+        for (ift_value : ift_array){
+             ift_transformed.add(ift_value - average);
+        }
+        for (float transformed_value : ift_transformed) {
+            if (transformed_value < 0) {
+                neg_sum += transformed_value;
+                neg_counter++;
+            } else {
+                pos_sum += transformed_value;
+                neg_counter++;
+            }
+        }
+        neg_threshold = neg_sum/neg_counter+factor;
+        pos_threshold = pos_sum/pos_counter*factor;
+
+        }
+
     }
 
     // calculate and return the forward fft
