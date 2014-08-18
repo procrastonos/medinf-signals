@@ -192,7 +192,11 @@ public class SensorPlot extends Activity
 
     private synchronized void drawEyeDetect()
     {
-        textView.setText(R.string.eyeStatus + String.valueOf(freqAnalysis.getREMCertainty()));
+        String msg = getString(R.string.eyeStatus) + " "
+                   + String.valueOf(freqAnalysis.getREMCertainty())
+                   + "%";
+
+        textView.setText(msg);
     }
 
     @Override
