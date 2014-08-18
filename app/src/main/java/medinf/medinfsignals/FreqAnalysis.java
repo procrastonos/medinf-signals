@@ -57,37 +57,23 @@ public class FreqAnalysis
         // remove oldest sample
         if (data.size() > FFT_SIZE)
             data.remove(0);
-    }
 
-    // calculate and return the forward fft
-    public ArrayList<Float> calcFFT()
-    {
+        // calculate fft
         // fill float array from ArrayList
         int i = 0;
         for (Float f : data)
         {
             fft_array[i++] = (f != null ? f : 0);
         }
-
         // perform forward fft
         fft.realForward(fft_array);
 
-        // move floats back into ArrayList. Yes, this is completely pointless.
-        ArrayList<Float> fft_list = new ArrayList<Float>();
-
-        for (i=0; i < fft_array.length; i++)
-            fft_list.add(fft_array[i]);
-
-        return fft_list;
-    }
-
-    public ArrayList<Float> calcIFT()
-    {
         // reset ift array to 0s
         Arrays.fill(ift_array, 0);
 
+        // calculate rft
         // get the frequency values from the given window
-        for (int i=lower; i<higher; i++)
+        for (i=lower; i<higher; i++)
         {
             ift_array[i] = fft_array[i];
         }
@@ -98,7 +84,22 @@ public class FreqAnalysis
 
         // perform inverse fft
         ift.realInverse(ift_array, true);
+    }
 
+    // calculate and return the forward fft
+    public ArrayList<Float> calcFFT()
+    {
+        // move floats back into ArrayList. Yes, this is completely pointless.
+        ArrayList<Float> fft_list = new ArrayList<Float>();
+
+        for (int i=0; i < fft_array.length; i++)
+            fft_list.add(fft_array[i]);
+
+        return fft_list;
+    }
+
+    public ArrayList<Float> calcIFT()
+    {
         // move floats back into ArrayList
         ArrayList<Float> ift_list = new ArrayList<Float>();
 
@@ -113,5 +114,10 @@ public class FreqAnalysis
             ift_list.add(ift_array[i] - shift);
 
         return ift_list;
+    }
+
+    public int getREMCertainty()
+    {
+        return 0;
     }
 }

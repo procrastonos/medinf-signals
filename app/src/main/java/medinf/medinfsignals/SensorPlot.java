@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import com.androidplot.Plot;
 import com.androidplot.util.Redrawer;
@@ -32,6 +33,7 @@ public class SensorPlot extends Activity
     // GUI elements
     private XYPlot historyPlot = null;
     private XYPlot frequencyPlot = null;
+    private TextView textView = null;
 
     // plot objects
     private SimpleXYSeries lightHistorySeries;
@@ -82,6 +84,9 @@ public class SensorPlot extends Activity
                         //draw forward and reverse fft plots
                         drawFFT(freqAnalysis.calcFFT());        // history window of 100
                         drawIFT(freqAnalysis.calcIFT());   // frequency range of 2..40
+
+                        // show eye movement detection status
+                        drawEyeDetect();
                     }
                 }
             }
@@ -102,6 +107,9 @@ public class SensorPlot extends Activity
         freqSeries.useImplicitXVals();
         iftSeries = new SimpleXYSeries("LowiFrequencies");
         iftSeries.useImplicitXVals();
+
+        // get textview
+        textView = (TextView) findViewById(R.id.textView);
 
         // set up history plot
         historyPlot = (XYPlot) findViewById(R.id.historyPlot);
@@ -184,7 +192,7 @@ public class SensorPlot extends Activity
 
     private synchronized void drawEyeDetect()
     {
-
+        textView.setText(R.string.eyeStatus + String.valueOf(freqAnalysis.getREMCertainty()));
     }
 
     @Override

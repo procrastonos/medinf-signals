@@ -3,12 +3,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
-    <!--<LinearLayout
-        android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:weightSum="1">
+    <LinearLayout
         android:layout_width="fill_parent"
-        android:orientation="horizontal"
-        android:layout_weight="10">-->
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_weight="1.31">
         <com.androidplot.xy.XYPlot
             android:id="@+id/historyPlot"
             android:layout_height="fill_parent"
@@ -19,18 +20,17 @@
             android:layout_height="fill_parent"
             android:layout_width="wrap_content"
             android:layout_weight="0.5"/>
-    <!--</LinearLayout>-->
-    <!--<LinearLayout
+    </LinearLayout>
+    <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_weight="90"
-        android:weightSum="1">
-
-        <Button
+        android:layout_height="30dp"
+        android:orientation="vertical">
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="New Button"
-            android:id="@+id/button"
-            android:layout_weight="0.28" />
-    </LinearLayout>-->
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text=""
+            android:id="@+id/textView"
+            android:layout_gravity="center_horizontal"/>
+    </LinearLayout>
 </LinearLayout>
