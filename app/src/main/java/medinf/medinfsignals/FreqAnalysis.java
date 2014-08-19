@@ -149,6 +149,9 @@ public class FreqAnalysis
                 direction = -1; // eye movement to the left
 
         }
+        else {
+            direction = 0;
+        }
     }
 
     // calculate and return the forward fft
