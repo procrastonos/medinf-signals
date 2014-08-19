@@ -13,7 +13,7 @@ public class FreqAnalysis
     private int HISTORY_SIZE = 0;
     private int FFT_SIZE = 0;
     private int IFT_SIZE = 0;
-    private int WINDOW_SIZE = 50;
+    private int WINDOW_SIZE = 10;
     private int lower = 0;
     private int higher = 0;
     private int num_of_maxima = 10;
@@ -29,7 +29,8 @@ public class FreqAnalysis
     private ArrayList<Float> maxima;                        // list of measured maxima
     private float[] fft_array;                              // array of forward fourier transformed data
     private float[] ift_array;                              // array of inverse fourier transformed data
-    private int threshold = 10;                              // threshold for movement detection
+    private float high_threshold = 120;
+    private float low_threshold = 120;
     private float average = 500;                            // current average of raw data
     private float high_average = 0;                         // average of ift values greater than the average
     private float low_average = 0;                          // average of ift values smaller than the average
@@ -63,24 +64,24 @@ public class FreqAnalysis
         ift = new FloatFFT_1D(IFT_SIZE);
     }
 
-    private float getMax(float [] array)
+    private float getMax(float [] array, int window_size)
     {
         float max = 0;
 
-        for (int i=array.length - WINDOW_SIZE; i<array.length; i++)
+        for (int i=array.length - window_size; i<array.length; i++)
         {
-            if (array[i] - average > max)
+            if (array[i] > max)
                 max = array[i];
         }
 
         return max;
     }
 
-    private float getMin(float [] array)
+    private float getMin(float [] array, int window_size)
     {
         float min = 0;
 
-        for (int i=array.length - WINDOW_SIZE; i<array.length; i++)
+        for (int i=array.length - window_size; i<array.length; i++)
         {
             if (array[i] - average < min)
                 min = array[i];
@@ -89,10 +90,8 @@ public class FreqAnalysis
         return min;
     }
 
-    // update data model
-    public void update(int value)
+    private void addData(int value)
     {
-        //-add-data---------------------------------------------------------------------------------
         // add sample to data
         data.add((float) value);
 
@@ -102,8 +101,10 @@ public class FreqAnalysis
         // remove oldest sample
         if (data.size() > FFT_SIZE)
             data.remove(0);
+    }
 
-        //-calculatet-fft---------------------------------------------------------------------------
+    private void calcFFT()
+    {
         // fill float array from ArrayList
         int i = 0;
         for (Float f : data)
@@ -112,8 +113,11 @@ public class FreqAnalysis
         }
         // perform forward fft
         fft.realForward(fft_array);
+    }
 
-        //-calculate-ift----------------------------------------------------------------------------
+    private void calcIFT()
+    {
+        int i = 0;
         // reset ift array to 0s
         Arrays.fill(ift_array, 0);
         // get the frequency values from the given window
@@ -129,13 +133,46 @@ public class FreqAnalysis
         // perform inverse fft
         ift.realInverse(ift_array, true);
 
+        for (i=0; i<ift_array.length; i++)
+        {
+            // scale ift output
+            ift_array[i] = average + (float)Math.pow((ift_array[i] - average) * 0.5, 3);
+        }
+
+    }
+
+    // update data model
+    public void update(int value)
+    {
+        addData(value);
+
+        calcFFT();
+        calcIFT();
+
         //-calculate-thresholds
-        high_average = high_average + ((getMax(fft_array) - high_average)/HISTORY_SIZE);
+        //high_average = high_average + ((getMax(fft_array) - high_average)/HISTORY_SIZE);
 
         //-detect-eye-movement----------------------------------------------------------------------
-        if (Math.abs(ift_array[ift_array.length-1] - average) > threshold)
+        if (getMax(ift_array, WINDOW_SIZE) - average > high_threshold)
         {
-            /*// add detected maximum to list
+            certainty = 1;
+
+            direction = LEFT;
+        }
+        else
+        {
+            if (getMin(ift_array, WINDOW_SIZE) - average < low_threshold) {
+                certainty = 1;
+                direction = RIGHT;
+            }
+            else
+            {
+                certainty = 0;
+                direction = 0;
+            }
+        }
+
+        /*// add detected maximum to list
             maxima.add(new Float(value));
 
             // remove oldest maximum
@@ -143,19 +180,10 @@ public class FreqAnalysis
                 maxima.remove(0);
 
             */
-            if (value - average > 0)
-                direction = 1; // eye movement to the right?
-            else
-                direction = -1; // eye movement to the left
-
-        }
-        else {
-            direction = 0;
-        }
     }
 
     // calculate and return the forward fft
-    public ArrayList<Float> calcFFT()
+    public ArrayList<Float> getFFT()
     {
         // move floats back into ArrayList. Yes, this is completely pointless.
         ArrayList<Float> fft_list = new ArrayList<Float>();
@@ -166,14 +194,14 @@ public class FreqAnalysis
         return fft_list;
     }
 
-    public ArrayList<Float> calcIFT()
+    public ArrayList<Float> getIFT()
     {
         // move floats back into ArrayList
         ArrayList<Float> ift_list = new ArrayList<Float>();
 
         // shift by offset to right border
         int offset = HISTORY_SIZE - FFT_SIZE;
-        float shift = 50;
+        float shift = 0;
 
         for (int i=0; i < offset; i++)
             ift_list.add(new Float(0));
@@ -184,14 +212,14 @@ public class FreqAnalysis
         return ift_list;
     }
 
-    public float getThreshold()
-    {
-        return high_average;
-    }
-
     public float getAverage()
     {
         return average;
+    }
+
+    public float getThreshold(boolean high)
+    {
+        return high? high_threshold : low_threshold;
     }
 
     public int getREMCertainty()

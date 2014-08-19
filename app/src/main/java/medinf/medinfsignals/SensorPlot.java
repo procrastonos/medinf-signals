@@ -6,8 +6,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.widget.Button;
 
 import com.androidplot.Plot;
 import com.androidplot.util.Redrawer;
@@ -32,18 +34,25 @@ public class SensorPlot extends Activity
     private static final int LEFT = -1;
     private static final int RIGHT = 1;
 
+    // flags
+    private boolean running = true;
+
     // GUI elements
     private XYPlot historyPlot = null;
     private XYPlot frequencyPlot = null;
     private TextView certaintyView = null;
     private TextView directionView = null;
+    private Button button = null;
 
     // plot objects
     private SimpleXYSeries lightHistorySeries;
     private SimpleXYSeries emgHistorySeries;
     private SimpleXYSeries freqSeries;
     private SimpleXYSeries iftSeries;
-    private SimpleXYSeries thresholdSeries;
+    private SimpleXYSeries detectionSeries;
+    private SimpleXYSeries highThresholdSeries;
+    private SimpleXYSeries lowThresholdSeries;
+    private SimpleXYSeries averageSeries;
     private Redrawer histRedrawer;
     private Redrawer freqRedrawer;
 
@@ -79,6 +88,7 @@ public class SensorPlot extends Activity
                     // if value was an EMG(EOG) reading
                     if (code == EMG)
                     {
+                        drawAverage(freqAnalysis.getAverage());
                         // draw the plain EMG plot
                         drawEMG(val);
 
@@ -86,15 +96,17 @@ public class SensorPlot extends Activity
                         freqAnalysis.update(val);
 
                         //drawThreshold(freqAnalysis.getThreshold());
-                        drawThreshold((freqAnalysis.getAverage()/4) * (freqAnalysis.getEyeDirection()+2));
+                        drawHighThreshold(freqAnalysis.getThreshold(true) + freqAnalysis.getAverage());
+                        drawLowThreshold(freqAnalysis.getAverage() - freqAnalysis.getThreshold(false));
 
                         //draw forward and reverse fft plots
-                        drawFFT(freqAnalysis.calcFFT());        // history window of 100
-                        drawIFT(freqAnalysis.calcIFT());        // frequency range of 2..40
+                        drawFFT(freqAnalysis.getFFT());        // history window of 200
+                        drawIFT(freqAnalysis.getIFT());        // frequency range of 0..30
 
                         // show eye movement detection status
-                        drawEyeDetect();
-                        drawEyeDirection();
+                        //drawEyeDetect(freqAnalysis.getREMCertainty());
+                        drawEyeDetect(freqAnalysis.getREMCertainty());
+                        //drawEyeDirection();
                     }
                 }
             }
@@ -107,35 +119,66 @@ public class SensorPlot extends Activity
         setContentView(R.layout.sensor_plot_layout);
 
         // set up series
+        averageSeries = new SimpleXYSeries("Average");
+        averageSeries.useImplicitXVals();
         lightHistorySeries = new SimpleXYSeries("Brightness");
         lightHistorySeries.useImplicitXVals();
         emgHistorySeries = new SimpleXYSeries("EMG");
         emgHistorySeries.useImplicitXVals();
-        freqSeries = new SimpleXYSeries("Frequency");
+        freqSeries = new SimpleXYSeries("FFT");
         freqSeries.useImplicitXVals();
-        iftSeries = new SimpleXYSeries("LowiFrequencies");
+        iftSeries = new SimpleXYSeries("IFT");
         iftSeries.useImplicitXVals();
-        thresholdSeries = new SimpleXYSeries("HighThreshold");
-        thresholdSeries.useImplicitXVals();
+        highThresholdSeries = new SimpleXYSeries("High Threshold");
+        highThresholdSeries.useImplicitXVals();
+        lowThresholdSeries = new SimpleXYSeries("Low Threshold");
+        lowThresholdSeries.useImplicitXVals();
+        detectionSeries = new SimpleXYSeries("Detection");
+        detectionSeries.useImplicitXVals();
 
         // get textview
         certaintyView = (TextView) findViewById(R.id.certainty);
         directionView = (TextView) findViewById(R.id.direction);
+        button = (Button) findViewById(R.id.button);
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (running)
+                {
+                    histRedrawer.pause();
+                    freqRedrawer.pause();
+                    button.setText(getText(R.string.pauseButtonPaused));
+                    running = false;
+                }
+                else
+                {
+                    histRedrawer.start();
+                    freqRedrawer.start();
+                    button.setText(getText(R.string.pauseButton));
+                    running = true;
+                }
+            }
+        });
 
         // set up history plot
         historyPlot = (XYPlot) findViewById(R.id.historyPlot);
         historyPlot.setDomainBoundaries(0, HISTORY_SIZE, BoundaryMode.FIXED);
         historyPlot.setRangeBoundaries(VALUE_OFFSET, VALUE_SIZE, BoundaryMode.FIXED);
-        historyPlot.setDomainStepValue(HISTORY_SIZE / 10);
+        historyPlot.setDomainStepValue(HISTORY_SIZE / 7);
         historyPlot.addSeries(lightHistorySeries, new LineAndPointFormatter(Color.rgb(255, 0, 0), null, null, null));
         historyPlot.addSeries(emgHistorySeries, new LineAndPointFormatter(Color.rgb(0, 0, 255), null, null, null));
+        historyPlot.addSeries(highThresholdSeries, new LineAndPointFormatter(Color.rgb(255, 127, 0), null, null, null));
+        historyPlot.addSeries(lowThresholdSeries, new LineAndPointFormatter(Color.rgb(255, 0, 127), null, null, null));
         historyPlot.addSeries(iftSeries, new LineAndPointFormatter(Color.rgb(0, 255, 0), null, null, null));
-        historyPlot.addSeries(thresholdSeries, new LineAndPointFormatter(Color.rgb(255, 125, 0), null, null, null));
+        historyPlot.addSeries(averageSeries, new LineAndPointFormatter(Color.rgb(255, 255, 0), null, null, null));
+        historyPlot.addSeries(detectionSeries, new LineAndPointFormatter(Color.rgb(255, 0, 0), null, null, null));
         historyPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
         historyPlot.setDomainLabel("Time");
         historyPlot.getDomainLabelWidget().pack();
         historyPlot.setRangeLabel("Brightness/EMG Val");
         historyPlot.getRangeLabelWidget().pack();
+        historyPlot.setRangeStepValue(10);
         historyPlot.setRangeValueFormat(new DecimalFormat("#"));
         historyPlot.setDomainValueFormat(new DecimalFormat("#"));
 
@@ -191,16 +234,40 @@ public class SensorPlot extends Activity
 
     }
 
-    private synchronized void drawThreshold(float value)
+    private synchronized void drawHighThreshold(float value)
     {
         // remove oldest sample on history
-        if (thresholdSeries.size() > HISTORY_SIZE)
+        if (highThresholdSeries.size() > HISTORY_SIZE)
         {
-            thresholdSeries.removeFirst();
+            highThresholdSeries.removeFirst();
         }
 
         // add latest sample to history
-        thresholdSeries.addLast(null, value);
+        highThresholdSeries.addLast(null, value);
+    }
+
+    private synchronized void drawLowThreshold(float value)
+    {
+        // remove oldest sample on history
+        if (lowThresholdSeries.size() > HISTORY_SIZE)
+        {
+            lowThresholdSeries.removeFirst();
+        }
+
+        // add latest sample to history
+        lowThresholdSeries.addLast(null, value);
+    }
+
+    private synchronized void drawAverage(float value)
+    {
+        // remove oldest sample on history
+        if (averageSeries.size() > HISTORY_SIZE)
+        {
+            averageSeries.removeFirst();
+        }
+
+        // add latest sample to history
+        averageSeries.addLast(null, value);
     }
 
     // draw forward FFT plot
@@ -215,13 +282,21 @@ public class SensorPlot extends Activity
         iftSeries.setModel(ift_data, SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
     }
 
-    private synchronized void drawEyeDetect()
+    private synchronized void drawEyeDetect(int value)
     {
-        String msg = getString(R.string.eyeStatus) + " "
-                   + String.valueOf(freqAnalysis.getREMCertainty())
-                   + "%";
+        //String msg = getString(R.string.eyeStatus) + " "
+        //           + String.valueOf(value)
+        //           + "%";
 
-        certaintyView.setText(msg);
+        //certaintyView.setText(msg);
+        // remove oldest sample on history
+        if (detectionSeries.size() > HISTORY_SIZE)
+        {
+            detectionSeries.removeFirst();
+        }
+
+        // add latest sample to history
+        detectionSeries.addLast(null, value * 100);
     }
 
     private synchronized void drawEyeDirection()
