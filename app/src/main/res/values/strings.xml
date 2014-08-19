@@ -16,4 +16,5 @@
     <string name="showFpsCb">showFPS</string>
     <string name="hwAccCb">hwAcc</string>
     <string name="eyeStatus">eye movement: </string>
+    <string name="eyeDirection">eye direction: </string>
 </resources>

@@ -29,17 +29,21 @@ public class SensorPlot extends Activity
     private static final int HISTORY_SIZE = 600;
     private static final int VALUE_SIZE = 1024;
     private static final int VALUE_OFFSET = 0;
+    private static final int LEFT = -1;
+    private static final int RIGHT = 1;
 
     // GUI elements
     private XYPlot historyPlot = null;
     private XYPlot frequencyPlot = null;
-    private TextView textView = null;
+    private TextView certaintyView = null;
+    private TextView directionView = null;
 
     // plot objects
     private SimpleXYSeries lightHistorySeries;
     private SimpleXYSeries emgHistorySeries;
     private SimpleXYSeries freqSeries;
     private SimpleXYSeries iftSeries;
+    private SimpleXYSeries thresholdSeries;
     private Redrawer histRedrawer;
     private Redrawer freqRedrawer;
 
@@ -81,12 +85,16 @@ public class SensorPlot extends Activity
                         // update EMG data model
                         freqAnalysis.update(val);
 
+                        //drawThreshold(freqAnalysis.getThreshold());
+                        drawThreshold((freqAnalysis.getAverage()/4) * (freqAnalysis.getEyeDirection()+2));
+
                         //draw forward and reverse fft plots
                         drawFFT(freqAnalysis.calcFFT());        // history window of 100
-                        drawIFT(freqAnalysis.calcIFT());   // frequency range of 2..40
+                        drawIFT(freqAnalysis.calcIFT());        // frequency range of 2..40
 
                         // show eye movement detection status
                         drawEyeDetect();
+                        drawEyeDirection();
                     }
                 }
             }
@@ -107,18 +115,22 @@ public class SensorPlot extends Activity
         freqSeries.useImplicitXVals();
         iftSeries = new SimpleXYSeries("LowiFrequencies");
         iftSeries.useImplicitXVals();
+        thresholdSeries = new SimpleXYSeries("HighThreshold");
+        thresholdSeries.useImplicitXVals();
 
         // get textview
-        textView = (TextView) findViewById(R.id.textView);
+        certaintyView = (TextView) findViewById(R.id.certainty);
+        directionView = (TextView) findViewById(R.id.direction);
 
         // set up history plot
         historyPlot = (XYPlot) findViewById(R.id.historyPlot);
         historyPlot.setDomainBoundaries(0, HISTORY_SIZE, BoundaryMode.FIXED);
         historyPlot.setRangeBoundaries(VALUE_OFFSET, VALUE_SIZE, BoundaryMode.FIXED);
-        historyPlot.setDomainStepValue(HISTORY_SIZE/10);
+        historyPlot.setDomainStepValue(HISTORY_SIZE / 10);
         historyPlot.addSeries(lightHistorySeries, new LineAndPointFormatter(Color.rgb(255, 0, 0), null, null, null));
         historyPlot.addSeries(emgHistorySeries, new LineAndPointFormatter(Color.rgb(0, 0, 255), null, null, null));
         historyPlot.addSeries(iftSeries, new LineAndPointFormatter(Color.rgb(0, 255, 0), null, null, null));
+        historyPlot.addSeries(thresholdSeries, new LineAndPointFormatter(Color.rgb(255, 125, 0), null, null, null));
         historyPlot.setDomainStepMode(XYStepMode.INCREMENT_BY_VAL);
         historyPlot.setDomainLabel("Time");
         historyPlot.getDomainLabelWidget().pack();
@@ -179,8 +191,21 @@ public class SensorPlot extends Activity
 
     }
 
+    private synchronized void drawThreshold(float value)
+    {
+        // remove oldest sample on history
+        if (thresholdSeries.size() > HISTORY_SIZE)
+        {
+            thresholdSeries.removeFirst();
+        }
+
+        // add latest sample to history
+        thresholdSeries.addLast(null, value);
+    }
+
     // draw forward FFT plot
-    private synchronized void drawFFT(ArrayList<Float> fft_data) {
+    private synchronized void drawFFT(ArrayList<Float> fft_data)
+    {
         freqSeries.setModel(fft_data, SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
     }
 
@@ -196,7 +221,23 @@ public class SensorPlot extends Activity
                    + String.valueOf(freqAnalysis.getREMCertainty())
                    + "%";
 
-        textView.setText(msg);
+        certaintyView.setText(msg);
+    }
+
+    private synchronized void drawEyeDirection()
+    {
+        String msg = getString(R.string.eyeDirection);
+
+        byte dir = freqAnalysis.getEyeDirection();
+
+        if (dir == LEFT)
+            msg += " Left";
+        if (dir == RIGHT)
+            msg += " Right";
+        if (dir == 0)
+            msg += "no movement";
+
+        directionView.setText(msg);
     }
 
     @Override

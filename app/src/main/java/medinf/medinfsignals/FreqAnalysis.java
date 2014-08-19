@@ -13,21 +13,30 @@ public class FreqAnalysis
     private int HISTORY_SIZE = 0;
     private int FFT_SIZE = 0;
     private int IFT_SIZE = 0;
+    private int WINDOW_SIZE = 50;
     private int lower = 0;
     private int higher = 0;
+    private int num_of_maxima = 10;
+    private static final int LEFT = -1;
+    private static final int RIGHT = 1;
+
+    // flags
+    private byte direction = 0;
+    private int certainty = 0;
 
     // data
-    ArrayList<Float> data;
-    private float[] fft_array;
-    private float[] ift_array;
-    private int threshold;
+    private ArrayList<Float> data;                          // raw data
+    private ArrayList<Float> maxima;                        // list of measured maxima
+    private float[] fft_array;                              // array of forward fourier transformed data
+    private float[] ift_array;                              // array of inverse fourier transformed data
+    private int threshold = 10;                              // threshold for movement detection
+    private float average = 500;                            // current average of raw data
+    private float high_average = 0;                         // average of ift values greater than the average
+    private float low_average = 0;                          // average of ift values smaller than the average
 
     // local objects
     private FloatFFT_1D fft;                                // forward fast fourier transform object
     private FloatFFT_1D ift;                                // reverse fast fourier transform object
-    private float factor;
-    private float neg_threshold;
-    private float pos_threshold;
 
     public FreqAnalysis(int hist_size, int fft_size, int low, int high)
     {
@@ -41,6 +50,8 @@ public class FreqAnalysis
 
         // initialize data
         data = new ArrayList<Float>();
+        maxima = new ArrayList<Float>();
+
         // create new empty array and fill with 0s
         fft_array = new float[FFT_SIZE];
         Arrays.fill(fft_array, 0);
@@ -52,16 +63,47 @@ public class FreqAnalysis
         ift = new FloatFFT_1D(IFT_SIZE);
     }
 
+    private float getMax(float [] array)
+    {
+        float max = 0;
+
+        for (int i=array.length - WINDOW_SIZE; i<array.length; i++)
+        {
+            if (array[i] - average > max)
+                max = array[i];
+        }
+
+        return max;
+    }
+
+    private float getMin(float [] array)
+    {
+        float min = 0;
+
+        for (int i=array.length - WINDOW_SIZE; i<array.length; i++)
+        {
+            if (array[i] - average < min)
+                min = array[i];
+        }
+
+        return min;
+    }
+
     // update data model
     public void update(int value)
     {
+        //-add-data---------------------------------------------------------------------------------
         // add sample to data
         data.add((float) value);
+
+        // update average
+        average = average + ((value - average)/HISTORY_SIZE);
 
         // remove oldest sample
         if (data.size() > FFT_SIZE)
             data.remove(0);
-        // calculate fft
+
+        //-calculatet-fft---------------------------------------------------------------------------
         // fill float array from ArrayList
         int i = 0;
         for (Float f : data)
@@ -71,10 +113,9 @@ public class FreqAnalysis
         // perform forward fft
         fft.realForward(fft_array);
 
+        //-calculate-ift----------------------------------------------------------------------------
         // reset ift array to 0s
         Arrays.fill(ift_array, 0);
-
-        // calculate rft
         // get the frequency values from the given window
         for (i=lower; i<higher; i++)
         {
@@ -88,32 +129,26 @@ public class FreqAnalysis
         // perform inverse fft
         ift.realInverse(ift_array, true);
 
-        // calculate thresholds
-        int sum = 0;
-        int pos_sum, pos_counter = 0;
-        int neg_sum, neg_counter = 0;
-        for (Float datavalue : data){
-            sum += datavalue;
-        }
-        float average = sum/data.size();
-        ArrayList <float> ift_transformed;
-        for (ift_value : ift_array){
-             ift_transformed.add(ift_value - average);
-        }
-        for (float transformed_value : ift_transformed) {
-            if (transformed_value < 0) {
-                neg_sum += transformed_value;
-                neg_counter++;
-            } else {
-                pos_sum += transformed_value;
-                neg_counter++;
-            }
-        }
-        neg_threshold = neg_sum/neg_counter+factor;
-        pos_threshold = pos_sum/pos_counter*factor;
+        //-calculate-thresholds
+        high_average = high_average + ((getMax(fft_array) - high_average)/HISTORY_SIZE);
+
+        //-detect-eye-movement----------------------------------------------------------------------
+        if (Math.abs(ift_array[ift_array.length-1] - average) > threshold)
+        {
+            /*// add detected maximum to list
+            maxima.add(new Float(value));
+
+            // remove oldest maximum
+            if (maxima.size() > num_of_maxima)
+                maxima.remove(0);
+
+            */
+            if (value - average > 0)
+                direction = 1; // eye movement to the right?
+            else
+                direction = -1; // eye movement to the left
 
         }
-
     }
 
     // calculate and return the forward fft
@@ -146,8 +181,23 @@ public class FreqAnalysis
         return ift_list;
     }
 
+    public float getThreshold()
+    {
+        return high_average;
+    }
+
+    public float getAverage()
+    {
+        return average;
+    }
+
     public int getREMCertainty()
     {
-        return 0;
+        return certainty;
+    }
+
+    public byte getEyeDirection()
+    {
+        return direction;
     }
 }
