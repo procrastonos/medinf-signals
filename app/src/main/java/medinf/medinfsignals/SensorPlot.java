@@ -18,6 +18,8 @@ import com.androidplot.xy.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import medinf.medinfsignals.ConnectedThread;
 
@@ -36,6 +38,8 @@ public class SensorPlot extends Activity
 
     // flags
     private boolean running = true;
+
+    private int frequency = 0;
 
     // GUI elements
     private XYPlot historyPlot = null;
@@ -59,7 +63,11 @@ public class SensorPlot extends Activity
     // local objects
     private ConnectedThread connectedThread;        // thread handling reading from BT socket
     private Handler messageHandler;                 // message handler to pass data from thread to activity
-    FreqAnalysis freqAnalysis;                      // frequency analysis object
+    private FreqAnalysis freqAnalysis;              // frequency analysis object
+    private Timer timer;
+    private TimerTask task;
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -105,7 +113,8 @@ public class SensorPlot extends Activity
 
                         // show eye movement detection status
                         //drawEyeDetect(freqAnalysis.getREMCertainty());
-                        drawEyeDetect(freqAnalysis.getREMCertainty());
+                        drawEyeDetect(freqAnalysis.getREMCertainty()+1);
+                        drawEyeFrequency(frequency);
                         //drawEyeDirection();
                     }
                 }
@@ -137,7 +146,7 @@ public class SensorPlot extends Activity
         detectionSeries.useImplicitXVals();
 
         // get textview
-        certaintyView = (TextView) findViewById(R.id.certainty);
+        //certaintyView = (TextView) findViewById(R.id.certainty);
         directionView = (TextView) findViewById(R.id.direction);
         button = (Button) findViewById(R.id.button);
 
@@ -205,6 +214,16 @@ public class SensorPlot extends Activity
         // set up and start connection handling thread
         connectedThread = new ConnectedThread(App.socket, messageHandler);
         connectedThread.start();
+
+        task = new TimerTask() {
+            @Override
+            public void run() {
+                frequency = freqAnalysis.getFrequency();
+            }
+        };
+
+        timer = new Timer();
+        timer.scheduleAtFixedRate(task, 10, 10);
     }
 
     // draw light plot
@@ -299,18 +318,9 @@ public class SensorPlot extends Activity
         detectionSeries.addLast(null, value * 100);
     }
 
-    private synchronized void drawEyeDirection()
+    private synchronized void drawEyeFrequency(int freq)
     {
-        String msg = getString(R.string.eyeDirection);
-
-        byte dir = freqAnalysis.getEyeDirection();
-
-        if (dir == LEFT)
-            msg += " Left";
-        if (dir == RIGHT)
-            msg += " Right";
-        if (dir == 0)
-            msg += "no movement";
+        String msg = getString(R.string.eyeFrequency) + String.valueOf(freq);
 
         directionView.setText(msg);
     }

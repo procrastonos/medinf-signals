@@ -16,7 +16,8 @@ public class FreqAnalysis
     private int WINDOW_SIZE = 10;
     private int lower = 0;
     private int higher = 0;
-    private int num_of_maxima = 10;
+    private int counter = 0;
+    private float frequency = 0;
     private static final int LEFT = -1;
     private static final int RIGHT = 1;
 
@@ -70,7 +71,7 @@ public class FreqAnalysis
 
         for (int i=array.length - window_size; i<array.length; i++)
         {
-            if (array[i] > max)
+            if (Math.abs(array[i] - average) > max)
                 max = array[i];
         }
 
@@ -154,22 +155,18 @@ public class FreqAnalysis
 
         //-detect-eye-movement----------------------------------------------------------------------
         if (getMax(ift_array, WINDOW_SIZE) - average > high_threshold)
+            // || getMin(ift_array, WINDOW_SIZE) - average < low_threshold)
         {
+            if (certainty == 0)
+                counter++;
             certainty = 1;
-
-            direction = LEFT;
+            // too complicated
+            //direction = LEFT;
         }
         else
         {
-            if (getMin(ift_array, WINDOW_SIZE) - average < low_threshold) {
-                certainty = 1;
-                direction = RIGHT;
-            }
-            else
-            {
-                certainty = 0;
-                direction = 0;
-            }
+            certainty = 0;
+            direction = 0;
         }
 
         /*// add detected maximum to list
@@ -180,6 +177,13 @@ public class FreqAnalysis
                 maxima.remove(0);
 
             */
+    }
+
+    public int getFrequency()
+    {
+        frequency += ((counter * 6000) - frequency) / 100;
+        counter = 0;
+        return (int)frequency;
     }
 
     // calculate and return the forward fft

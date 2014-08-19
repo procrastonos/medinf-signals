@@ -17,6 +17,7 @@
     <string name="hwAccCb">hwAcc</string>
     <string name="eyeStatus">eye movement: </string>
     <string name="eyeDirection">eye direction: </string>
+    <string name="eyeFrequency">Eye movements/m: </string>
     <string name="pauseButton">Pause</string>
     <string name="pauseButtonPaused">Weiter</string>
 </resources>

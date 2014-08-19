@@ -33,7 +33,7 @@
             android:id="@+id/button"
             android:layout_weight="0.6" />
 
-        <TextView
+       <!-- <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
@@ -41,10 +41,11 @@
             android:text=""
             android:id="@+id/certainty"
             android:layout_gravity="center_horizontal"/>
+            -->
         <TextView
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.5"
+            android:layout_height="fill_parent"
+            android:layout_weight="0.3"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:text=""
             android:id="@+id/direction"
