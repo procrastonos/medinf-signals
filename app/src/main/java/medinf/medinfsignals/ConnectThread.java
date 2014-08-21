@@ -8,7 +8,8 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.UUID;
 
-public class ConnectThread extends Thread {
+public class ConnectThread extends Thread 
+{
     private BluetoothAdapter mBluetoothAdapter;
     private final BluetoothSocket mmSocket;
     private final BluetoothDevice mmDevice;

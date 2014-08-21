@@ -10,35 +10,35 @@ import java.util.Arrays;
 public class FreqAnalysis
 {
     // constants
-    private int HISTORY_SIZE = 0;
-    private int FFT_SIZE = 0;
-    private int IFT_SIZE = 0;
-    private int WINDOW_SIZE = 10;
-    private int lower = 0;
-    private int higher = 0;
-    private int counter = 0;
-    private float frequency = 0;
-    private static final int LEFT = -1;
-    private static final int RIGHT = 1;
+    private int HISTORY_SIZE = 0;           // size of raw data array
+    private int FFT_SIZE = 0;               // size of forward fft array
+    private int IFT_SIZE = 0;               // size of inverse fft array
+    private int WINDOW_SIZE = 10;           // size of window in which to search for maxima
+    private static final int LEFT = -1;     // define for left eye movement
+    private static final int RIGHT = 1;     // define for right eye movement
+    private int lower = 0;                  // lower bound of frequency window for inverse fft
+    private int higher = 0;                 // upper bound for frequency window for inverse fft
 
     // flags
-    private byte direction = 0;
-    private int certainty = 0;
+    private byte direction = 0;             // direction in which eye moveing
+    private int certainty = 0;              // certainty value for REM detection
 
     // data
-    private ArrayList<Float> data;                          // raw data
-    private ArrayList<Float> maxima;                        // list of measured maxima
-    private float[] fft_array;                              // array of forward fourier transformed data
-    private float[] ift_array;                              // array of inverse fourier transformed data
-    private float high_threshold = 120;
-    private float low_threshold = 120;
-    private float average = 500;                            // current average of raw data
-    private float high_average = 0;                         // average of ift values greater than the average
-    private float low_average = 0;                          // average of ift values smaller than the average
+    private ArrayList<Float> data;          // raw data
+    private ArrayList<Float> maxima;        // list of measured maxima
+    private float[] fft_array;              // array of forward fourier transformed data
+    private float[] ift_array;              // array of inverse fourier transformed data
+    private float high_threshold = 120;     // upper threshold for movement detection
+    private float low_threshold = 120;      // lower threshold for movement detection
+    private float average = 500;            // current average of raw data
+    private float high_average = 0;         // average of ift values greater than the average
+    private float low_average = 0;          // average of ift values smaller than the average
+    private int counter = 0;                // counter of detected movements
+    private float frequency = 0;            // frequency of eye movement
 
     // local objects
-    private FloatFFT_1D fft;                                // forward fast fourier transform object
-    private FloatFFT_1D ift;                                // reverse fast fourier transform object
+    private FloatFFT_1D fft;                // forward fast fourier transform object
+    private FloatFFT_1D ift;                // reverse fast fourier transform object
 
     public FreqAnalysis(int hist_size, int fft_size, int low, int high)
     {
@@ -69,6 +69,7 @@ public class FreqAnalysis
     {
         float max = 0;
 
+        // find maximum (absolute) value of array in the given window
         for (int i=array.length - window_size; i<array.length; i++)
         {
             if (Math.abs(array[i] - average) > max)
@@ -110,6 +111,7 @@ public class FreqAnalysis
         int i = 0;
         for (Float f : data)
         {
+            // fill array with 0s if list isn't filled yet
             fft_array[i++] = (f != null ? f : 0);
         }
         // perform forward fft
@@ -150,38 +152,27 @@ public class FreqAnalysis
         calcFFT();
         calcIFT();
 
-        //-calculate-thresholds
-        //high_average = high_average + ((getMax(fft_array) - high_average)/HISTORY_SIZE);
-
-        //-detect-eye-movement----------------------------------------------------------------------
+        // detect eye movement
         if (getMax(ift_array, WINDOW_SIZE) - average > high_threshold)
-            // || getMin(ift_array, WINDOW_SIZE) - average < low_threshold)
         {
+            // count rising signal edges
             if (certainty == 0)
                 counter++;
             certainty = 1;
-            // too complicated
-            //direction = LEFT;
         }
         else
         {
             certainty = 0;
             direction = 0;
         }
-
-        /*// add detected maximum to list
-            maxima.add(new Float(value));
-
-            // remove oldest maximum
-            if (maxima.size() > num_of_maxima)
-                maxima.remove(0);
-
-            */
     }
 
+    // calculate frequency. is called every 10ms
     public int getFrequency()
     {
+        // update frequency by weighted current movements per minute
         frequency += ((counter * 6000) - frequency) / 100;
+        // reset counter
         counter = 0;
         return (int)frequency;
     }
